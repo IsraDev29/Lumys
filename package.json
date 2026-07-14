@@ -1,13 +1,15 @@
 {
   "name": "lumys",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Plataforma Web inteligente y comunitaria para la gestion de la salud mental, de Nicaragua.",
+  "main": "src/server.js",
   "directories": {
     "doc": "docs",
     "test": "test"
   },
   "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,10 +17,17 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "prisma": "^7.8.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
     "@prisma/client": "^7.8.0",
-    "jsonwebtoken": "^9.0.3"
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.0",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^3.23.8"
   }
 }
