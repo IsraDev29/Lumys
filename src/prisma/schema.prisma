@@ -6,8 +6,94 @@
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
+  
 }
 
 datasource db {
   provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model Usuario{
+   id              String   @id @default(uuid())
+  edad            Int?
+  tipoUsuario     String   @map("tipo_usuario")
+  centroId        String?  @map("centro_id")
+  comunidadId     String?  @map("comunidad_id")
+  consentimiento  Boolean
+  passwordHash    String   @map("password_hash")
+  fechaRegistro   DateTime @default(now()) @map("fecha_registro")
+
+  registros RegistrosEmocional[]
+  predicciones PrediccionRiesgo[]
+  alertas Alerta[]
+  intervenciones Intervencion[]
+  @@map("usuarios")
+}
+
+model RegistroEmocional{
+  id String @id @default (uuid())
+  usuarioId String @map("usuario_id")
+  usuario Usuario @relation(fields: [UsuarioId], references :[id])
+  emocion String
+  nivelEstres Int @map("nivel_estres")
+  horasSueno Decimal @map("horas_sueno")
+  energia Int
+  concentracion Int 
+  apoyoSocial Int @map("apoyo_social")
+  textoUsuario String? @map("texto_usuario")
+  audioUrl String? @map("audio_url")
+  fecha DateTime @default(now())
+
+  @@map("registros_emocionales")
+}
+
+model PrediccionRiesgo {
+  id String @id @default(uuid())
+  usuarioId String @map("usuario_id")
+  usuario Usuario @relation(fields : [usuarioId], references: [id])
+  puntajeIcve Decimal @map("puntaje_icve")
+  nivelRiesgo String @map("nivel_riesgo")
+  confianzaModelo Decimal @map("confianza_modelo")
+  factoresExplicativos Json @map("factores_explicativos")
+  coachIa String? @map("coach_ia")
+  fecha DateTime @default(now())
+
+  @@map("predicciones_riesgo")
+}
+
+model Alerta {
+  id String @id @default(uuid())
+  usuarioId String @map("usuario_id")
+  usuario Usuario @relation(fields : [usuarioId], references: [id])
+  nivelAlerta String @map("nivel_alerta")
+  estado String
+  responsableId String? @map("responsable_id")
+  fechaCreacion DateTime @defult(now()) @map("fecha_creacion")
+  fechaCierre DateTime? @map("fecha_cierre")
+
+  @@map("alertas")
+}
+
+model Intervencion{
+  id String @id @default(uuid())
+  usuarioId String @map("usuario_id")
+  usuario Usuario @relation(fields : [usuarioId], references: [id])
+  tipoIntervecion String @map("tipo_intervencion")
+  descripcion String? 
+  completada Boolean @default(false)
+  efectividad Decimal?
+  fecha DateTime @default(now())
+
+  @@map("intervenciones")
+}
+
+model ParametroFederado {
+  id String @id @default(uuid())
+  centroId String @map("centro_id")
+  icvePromedio Decimal @map ("icve_promedio")
+  totalRegistros Int @map("total_registros")
+  fechaActualizacion DateTime @default(now()) @map("fecha_actualizacion")
+
+  @@map("parametros_federados")
 }
