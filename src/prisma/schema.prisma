@@ -15,7 +15,7 @@ datasource db {
 }
 
 model Usuario{
-   id              String   @id @default(uuid())
+  id              String   @id @default(uuid())
   edad            Int?
   tipoUsuario     String   @map("tipo_usuario")
   centroId        String?  @map("centro_id")
@@ -24,7 +24,7 @@ model Usuario{
   passwordHash    String   @map("password_hash")
   fechaRegistro   DateTime @default(now()) @map("fecha_registro")
 
-  registros RegistrosEmocional[]
+  registros RegistroEmocional[]
   predicciones PrediccionRiesgo[]
   alertas Alerta[]
   intervenciones Intervencion[]
@@ -34,7 +34,7 @@ model Usuario{
 model RegistroEmocional{
   id String @id @default (uuid())
   usuarioId String @map("usuario_id")
-  usuario Usuario @relation(fields: [UsuarioId], references :[id])
+  
   emocion String
   nivelEstres Int @map("nivel_estres")
   horasSueno Decimal @map("horas_sueno")
@@ -45,13 +45,15 @@ model RegistroEmocional{
   audioUrl String? @map("audio_url")
   fecha DateTime @default(now())
 
+  usuario Usuario @relation(fields: [usuarioId], references:[id], onDelete: Cascade)
+  @@index([usuarioId, fecha])
   @@map("registros_emocionales")
 }
 
 model PrediccionRiesgo {
   id String @id @default(uuid())
   usuarioId String @map("usuario_id")
-  usuario Usuario @relation(fields : [usuarioId], references: [id])
+ 
   puntajeIcve Decimal @map("puntaje_icve")
   nivelRiesgo String @map("nivel_riesgo")
   confianzaModelo Decimal @map("confianza_modelo")
@@ -59,32 +61,38 @@ model PrediccionRiesgo {
   coachIa String? @map("coach_ia")
   fecha DateTime @default(now())
 
+ usuario Usuario @relation(fields: [usuarioId], references:[id], onDelete: Cascade)  
+ @@index([usuarioId,fecha])
   @@map("predicciones_riesgo")
 }
 
 model Alerta {
   id String @id @default(uuid())
   usuarioId String @map("usuario_id")
-  usuario Usuario @relation(fields : [usuarioId], references: [id])
+
   nivelAlerta String @map("nivel_alerta")
   estado String
   responsableId String? @map("responsable_id")
-  fechaCreacion DateTime @defult(now()) @map("fecha_creacion")
+  fechaCreacion DateTime @default(now()) @map("fecha_creacion")
   fechaCierre DateTime? @map("fecha_cierre")
 
+ usuario Usuario @relation(fields: [usuarioId], references:[id], onDelete: Cascade)
+  @@index([usuarioId, fechaCreacion])
   @@map("alertas")
 }
 
 model Intervencion{
   id String @id @default(uuid())
   usuarioId String @map("usuario_id")
-  usuario Usuario @relation(fields : [usuarioId], references: [id])
-  tipoIntervecion String @map("tipo_intervencion")
+ 
+  tipoIntervencion String @map("tipo_intervencion")
   descripcion String? 
   completada Boolean @default(false)
   efectividad Decimal?
   fecha DateTime @default(now())
 
+ usuario Usuario @relation(fields: [usuarioId], references:[id], onDelete: Cascade)
+  @@index([usuarioId, fecha])
   @@map("intervenciones")
 }
 
@@ -95,5 +103,6 @@ model ParametroFederado {
   totalRegistros Int @map("total_registros")
   fechaActualizacion DateTime @default(now()) @map("fecha_actualizacion")
 
+  @@index([centroId])
   @@map("parametros_federados")
 }
