@@ -17,7 +17,7 @@ const EMOCIONES_RIESGO = {
     sola: 70,
     triste: 80,
     desesperado: 95,
-    desperada: 95,
+    desesperada: 95,
 };
 
 const PALABRAS_CONTEXTO = {
@@ -40,23 +40,23 @@ const PALABRAS_CONTEXTO = {
     desempleo: 20,
     deuda: 15,
     enfermedad: 20,
-}
+};
 
 function limitar(valor, minimo=0, maximo=100) {
     const numero = Number(valor);
-    if (!Numbwe.isFinite(numero)) {
+    if (!Number.isFinite(numero)) {
         return minimo;
     }
     return Math.min(Math.max(numero, minimo), maximo);
 }
 
 function calcularRiesgoEmocional(registro){
-    const emocion = string (registro.emocion|| "").trim.toLowerCase();
+    const emocion = String (registro.emocion|| "").trim().toLowerCase();
 
     const riesgoEmocional = EMOCIONES_RIESGO[emocion] ?? 40; 
-    const riesgoEstres = Limitar(Number(registro.nivelEstres)*10);
+    const riesgoEstres = limitar(Number(registro.nivelEstres)*10);
 
-    const resultado = riesgoEmocion * 0.55 + riesgoEstres * 0.45;
+    const resultado = riesgoEmocional* 0.55 + riesgoEstres * 0.45;
 
     return limitar(resultado);
 }
@@ -65,13 +65,13 @@ function detectarTendencias(historial=[]){
 const puntajes = historial.map((registro) => {if (typeof registro === "number") {return registro;} 
 return Number(registro.puntajeIcve??
     registro.icve??
-    registro.puntajes
+    registro.puntaje
 );
 }) 
-.filter(Numbr.isFinite)
+.filter(Number.isFinite)
 .slice(-5)
 if (puntajes.length < 5) {
-    return "datos insuficientes"; 
+    return "datos_insuficientes"; 
 }
 const diferencia = puntajes[puntajes.length - 1] - puntajes[0];
 
@@ -86,7 +86,7 @@ return "mejora";
 }
 return "estable";}
 
-function CalcularDetiorio(historial=[]){
+function calcularDeterioro(historial=[]){
     const tendencia = detectarTendencias(historial);
 
     const valores = {
@@ -117,7 +117,7 @@ else if (horasSueno<4){
     riesgoSueno=60;
 }else if (horasSueno<7){
     riesgoSueno=35;
-}else if (horasSueno<9){
+}else if (horasSueno<=9){
     riesgoSueno=10;
 } else if (horasSueno<=10){
     riesgoSueno=30;
@@ -136,7 +136,7 @@ return limitar(resultado);
 } 
 
 function calcularContexto(registro){
- const texto = String(resgistro.textoUsuario || "")
+ const texto = String(registro.textoUsuario || "")
  .trim()
  .toLowerCase()
     .normalize("NFD")
@@ -166,7 +166,7 @@ function determinarNivelRiesgo(icve){
         return "critico";
     }
 
-  if (icve >= 60) {
+  if (icve >= 65) {
     return "alto";
   }
 
@@ -183,12 +183,12 @@ function calcularICVE(registroActual, historial=[]){
     }
 
     const riesgoEmocional = calcularRiesgoEmocional(registroActual);
-    const deterioroTemporal = calcularDetiorio(historial);
+    const deterioroTemporal = calcularDeterioro(historial);
     const funcionamiento = calcularFuncionamiento(registroActual);
     const apoyoSocialInverso = calcularApoyoSocialInverso(registroActual.apoyoSocial);
     const contexto = calcularContexto(registroActual);
 
-    const contexto = cakcularContexto(registroActual);
+    
     const puntaje = riesgoEmocional * 0.3 + deterioroTemporal * 0.25 + funcionamiento * 0.2 + apoyoSocialInverso * 0.15 + contexto * 0.1;
     const icve = Number(limitar(puntaje).toFixed(2));
 
@@ -208,7 +208,7 @@ function calcularICVE(registroActual, historial=[]){
 
 module.exports = {
     calcularRiesgoEmocional, 
-    calcularDetiorio,
+    calcularDeterioro,
     calcularFuncionamiento,
     calcularContexto,
     calcularApoyoSocialInverso,
