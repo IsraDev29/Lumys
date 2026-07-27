@@ -19,8 +19,11 @@ app.get('/health',(req,res) => {
 
 });
 
+const authRoutes = require('./auth/auth.routes');
+app.use('/api/v1/auth', authRoutes)
+
 const PORT =process.env.port || 5000
 
 app.listen(PORT, () => {
-    console.log('Servidor Lummys corriendo en http://localhost:' + PORT);
+    console.log(`Servidor Lumys* corriendo en el puerto ${PORT}`);
 });
