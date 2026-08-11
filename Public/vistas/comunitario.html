@@ -1,0 +1,104 @@
+<!-- Vista: gemelo digital emocional comunitario -->
+<section class="lm-stack">
+
+  <div class="lm-page-head">
+    <div class="lm-page-head__text">
+      <h1>Gemelo comunitario</h1>
+      <p>El clima emocional del centro, agregado y anónimo. <strong>Nunca representa a una persona</strong>: si un grupo tiene menos de 10 registros, no se muestra.</p>
+    </div>
+    <span class="lm-anon-note"><i class="bi bi-incognito"></i> Umbral mínimo aplicado</span>
+  </div>
+
+  <article class="lm-card">
+    <div class="lm-gemelo">
+      <div class="lm-gemelo__stage">
+        <img class="lm-lumy lm-lumy--float" id="gemelo-avatar" src="img/lumys-mascota.svg" alt="Avatar del clima comunitario">
+      </div>
+      <div>
+        <p class="lm-eyebrow">Clima del centro esta semana</p>
+        <h2 id="gemelo-titular" class="mb-3">—</h2>
+        <span class="lm-gemelo__estado mb-4" id="gemelo-estado">—</span>
+        <p class="lm-muted mb-0" style="font-size:.95rem">
+          Igual que con cada estudiante, la comparación es <strong>ipsativa</strong>: el centro se
+          compara con su propio promedio de las semanas anteriores, nunca con otros colegios.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Radar del centro</h2>
+            <p class="lm-caption mb-0">Línea sólida: esta semana. Punteada: el promedio propio del centro.</p>
+          </div>
+        </div>
+        <div id="radar"></div>
+      </article>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Por grupo</h2>
+            <p class="lm-caption mb-0">Sin nombres, sin casos individuales.</p>
+          </div>
+        </div>
+        <div class="lm-stack-sm" id="grupos"></div>
+      </article>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-7">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Cobertura del acompañamiento</h2>
+            <p class="lm-caption mb-0">Qué proporción del centro está efectivamente cubierta.</p>
+          </div>
+        </div>
+        <div class="lm-cobertura">
+          <div class="lm-cobertura__item">
+            <p class="lm-cobertura__pct mb-0">78%</p>
+            <p class="lm-caption mb-0">registra casi todos los días</p>
+          </div>
+          <div class="lm-cobertura__item">
+            <p class="lm-cobertura__pct mb-0">91%</p>
+            <p class="lm-caption mb-0">tiene su red de confianza armada</p>
+          </div>
+          <div class="lm-cobertura__item">
+            <p class="lm-cobertura__pct mb-0">100%</p>
+            <p class="lm-caption mb-0">de casos con responsable nombrado</p>
+          </div>
+          <div class="lm-cobertura__item">
+            <p class="lm-cobertura__pct mb-0">4</p>
+            <p class="lm-caption mb-0">servicios de derivación verificados</p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <article class="lm-card lm-card--cream h-100">
+        <h2>Por qué esto no es vigilancia</h2>
+        <p class="lm-muted mb-3" style="font-size:.94rem">
+          Si el adolescente siente que está siendo vigilado, deja de responder con honestidad
+          y el sistema empieza a medir humo. Por eso el agregado comunitario es
+          deliberadamente grueso: sirve para <strong>priorizar recursos</strong>, no para encontrar personas.
+        </p>
+        <ul class="lm-list">
+          <li class="lm-list__item"><i class="bi bi-x-lg" style="color:var(--lm-terracotta)"></i>
+            <span style="font-size:.92rem">No se puede llegar de un grupo a un estudiante.</span></li>
+          <li class="lm-list__item"><i class="bi bi-x-lg" style="color:var(--lm-terracotta)"></i>
+            <span style="font-size:.92rem">No se muestran grupos con pocos registros.</span></li>
+          <li class="lm-list__item"><i class="bi bi-check-lg" style="color:var(--lm-teal)"></i>
+            <span style="font-size:.92rem">Sí se ve dónde hace falta más tiempo de orientación.</span></li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>

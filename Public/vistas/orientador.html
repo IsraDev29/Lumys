@@ -1,0 +1,83 @@
+<!-- Vista: panel del orientador -->
+<section class="lm-stack">
+
+  <div class="lm-page-head">
+    <div class="lm-page-head__text">
+      <h1>Casos activos</h1>
+      <p>Cada tarjeta describe <strong>qué cambió y desde cuándo</strong>, comparado con la propia línea base del estudiante. Ninguna trae diagnóstico ni puntaje.</p>
+    </div>
+    <div class="lm-segmented" id="filtro-nivel" role="group" aria-label="Filtrar por nivel">
+      <button class="lm-segmented__btn is-active" type="button" data-nivel="todos">Todos</button>
+      <button class="lm-segmented__btn" type="button" data-nivel="1">Conversar</button>
+      <button class="lm-segmented__btn" type="button" data-nivel="2">Acompañar</button>
+      <button class="lm-segmented__btn" type="button" data-nivel="3">Derivar</button>
+    </div>
+  </div>
+
+  <div class="lm-kpi-grid" id="orientador-kpis"></div>
+
+  <div class="lm-note lm-note--teal">
+    <i class="bi bi-chat-heart" aria-hidden="true"></i>
+    <div>
+      <strong>No hubo alertas nuevas esta semana.</strong>
+      Tu conversación del martes sigue siendo lo que sostiene esto. El sistema
+      refuerza el acto de acompañar, no solo el resultado.
+    </div>
+  </div>
+
+  <div class="lm-board" id="tablero"></div>
+
+  <article class="lm-card">
+    <div class="lm-card__head">
+      <div>
+        <h2>Cómo se calcula una señal</h2>
+        <p class="lm-caption mb-0">Nunca es una caja negra: siempre se cruzan dos fuentes.</p>
+      </div>
+    </div>
+
+    <div class="lm-grid lm-grid--2">
+      <div class="lm-note lm-note--teal">
+        <i class="bi bi-clipboard-data" aria-hidden="true"></i>
+        <div>
+          <strong>Autorreporte (ICVE ipsativo)</strong>
+          <p class="lm-caption mb-0">No se compara con un corte clínico poblacional, sino con el promedio propio de las últimas semanas. Se mide la variación, no un valor absoluto.</p>
+        </div>
+      </div>
+      <div class="lm-note">
+        <i class="bi bi-activity" aria-hidden="true"></i>
+        <div>
+          <strong>Patrones de conducta observable</strong>
+          <p class="lm-caption mb-0">Frecuencia y regularidad de los check-ins, cambios de tono en el texto libre y rachas de evasión (“hoy no quiero contar”).</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="lm-divider">
+
+    <ul class="lm-list">
+      <li class="lm-list__item"><span class="lm-nivel lm-nivel--1">Nivel 1</span>
+        <span style="font-size:.93rem">Ambos componentes muestran cambio sostenido 2–3 semanas.</span></li>
+      <li class="lm-list__item"><span class="lm-nivel lm-nivel--2">Nivel 2</span>
+        <span style="font-size:.93rem">Ambos coinciden con intensidad marcada, o uno es muy fuerte y sostenido.</span></li>
+      <li class="lm-list__item"><span class="lm-nivel lm-nivel--3">Nivel 3</span>
+        <span style="font-size:.93rem">Lenguaje de riesgo explícito en el texto libre: inmediato, sin esperar 2–3 semanas.</span></li>
+    </ul>
+
+    <p class="lm-caption mb-0 mt-3">
+      Ningún componente activa una señal por sí solo con una sola medición. Un mal día
+      en el ICVE, o una frase aislada, no disparan una respuesta desproporcionada.
+    </p>
+  </article>
+</section>
+
+<!-- Ficha lateral del caso -->
+<div class="offcanvas offcanvas-end lm-drawer" tabindex="-1" id="ficha-caso" aria-labelledby="ficha-caso-titulo" style="width:min(460px,100%)">
+  <div class="offcanvas-header">
+    <div>
+      <h2 class="offcanvas-title h5 mb-1" id="ficha-caso-titulo">Caso</h2>
+      <p class="lm-caption mb-0" id="ficha-caso-sub"></p>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+  </div>
+  <div class="offcanvas-body" id="ficha-caso-cuerpo"></div>
+</div>
