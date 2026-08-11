@@ -1,15 +1,27 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const {PrismaClient} = require('../generated/prisma')
+const {PrismaClient} = require('@prisma/client')
+const {PrismaPg} = require('@prisma/adapter-pg')
 
-const prisma = new PrismaClient()
+// Prisma 7 ya no acepta `url` en el datasource: la conexión se pasa al cliente
+// mediante un driver adapter.
+const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
+const prisma = new PrismaClient({adapter})
 
 const SALT_ROUNDS = 10
 
-async function registarUsiario(datos){
-    const {email, edad, tipoUsuario, centroId, consentimiento, comunidadId, password, rol} = datos
+// La tabla `usuarios` real guarda el identificador de login en `contacto` y el
+// tipo de usuario en `perfil`. La API pública sigue hablando de `email` y
+// `tipoUsuario`, así que la traducción vive aquí.
+function aRespuestaPublica(usuario){
+    const {passwordHash: _, contacto, perfil, ...resto} = usuario;
+    return {...resto, email: contacto, tipoUsuario: perfil};
+}
 
-    const existente = await prisma.usuario.findUnique({where : {email}});
+async function registrarUsuario(datos){
+    const {email, nombre, tipoUsuario, institucionId, password, rol} = datos
+
+    const existente = await prisma.usuario.findUnique({where : {contacto: email}});
     if (existente){
         throw new Error('EMAIL YA REGISTRADO');
     }
@@ -18,32 +30,28 @@ async function registarUsiario(datos){
 
     const usuario = await prisma.usuario.create({
         data: {
-            email,
-            edad,
-            tipoUsuario,
-            centroId,
-            consentimiento,
-            comunidadId,
+            contacto: email,
+            nombre,
+            perfil: tipoUsuario,
+            institucionId,
             passwordHash,
             rol: rol || 'USUARIO'
         }
     })
 
-    const {passwordHash: _, ...usuarioSinPassword} = usuario;
-    return usuarioSinPassword;
+    return aRespuestaPublica(usuario);
 }
 
-async function VerificarCredenciales(email, password){
-    const usuario = await prisma.usuario.findUnique({where: {email}});
-    
+async function verificarCredenciales(email, password){
+    const usuario = await prisma.usuario.findUnique({where: {contacto: email}});
+
     if(!usuario) return null;
 
     const passwordCorrecto = await bcrypt.compare(password, usuario.passwordHash);
 
     if(!passwordCorrecto) return null;
 
-    const {passwordHash: _, ...usuarioSinPassword} = usuario;
-    return usuarioSinPassword;
+    return aRespuestaPublica(usuario);
 }
 
 function generarToken(usuario){

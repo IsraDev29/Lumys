@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 function verificarToken(req, res, next) {
-    const authHeader = req.headers.autorization;
+    const authHeader = req.headers.authorization;
 
     if (!authHeader){
         return res.status(401).json({error: 'No se proporcionó un token de autorización'});
@@ -16,7 +16,6 @@ function verificarToken(req, res, next) {
     }catch (error){
         return res.status(401).json({error: 'Token Inválido o Expirado'});
     }
-
-    module.exports = verificarToken;
-
 }
+
+module.exports = verificarToken;

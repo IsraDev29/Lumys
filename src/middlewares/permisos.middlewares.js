@@ -10,3 +10,5 @@ function verificarRol(...rolesPermitidos) {
         next();
     }
 }
+
+module.exports = verificarRol;

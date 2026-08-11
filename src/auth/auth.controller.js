@@ -1,4 +1,4 @@
-const authService = require('./auth.routes');
+const authService = require('./auth.service');
 
 async function register(req, res, next){
     try{
@@ -6,7 +6,7 @@ async function register(req, res, next){
         res.status(201).json(usuario);
     }catch (error){
         if (error.message === 'EMAIL YA REGISTRADO'){
-            return res.stattus(409).json({error: 'Email ya registrado'});
+            return res.status(409).json({error: 'Email ya registrado'});
         }
         next(error);
     }
