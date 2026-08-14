@@ -1,0 +1,203 @@
+/* ==========================================================================
+   Lumys* — Gemelo digital comunitario y red de confianza
+   Nunca se muestra a una persona: solo agregados y anónimos.
+   ========================================================================== */
+
+/* --- Avatar del grupo ------------------------------------------------------- */
+.lm-gemelo {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  align-items: center;
+}
+@media (max-width: 780px) { .lm-gemelo { grid-template-columns: minmax(0, 1fr); } }
+
+.lm-gemelo__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--lm-sp-5);
+  min-height: 240px;
+}
+.lm-gemelo__stage::before {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 48% 52% 56% 44% / 54% 46% 54% 46%;
+  background: radial-gradient(circle at 36% 32%, rgba(15, 118, 110, 0.22), rgba(6, 95, 70, 0.06) 62%, transparent 74%);
+  animation: lm-blob 14s var(--lm-ease) infinite;
+}
+.lm-gemelo__stage img { position: relative; width: min(210px, 62%); }
+
+.lm-gemelo__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.4rem 1rem;
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-emerald-050);
+  border: 1px solid var(--lm-emerald-100);
+  color: var(--lm-emerald);
+  font-family: var(--lm-font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* --- Radar comunitario (SVG) ------------------------------------------------ */
+.lm-radar { width: 100%; height: auto; display: block; max-width: 420px; margin: 0 auto; }
+.lm-radar .ring { fill: none; stroke: var(--lm-line); stroke-width: 1; }
+.lm-radar .spoke { stroke: var(--lm-line); stroke-width: 1; }
+.lm-radar .shape-avg { fill: rgba(194, 65, 12, 0.1); stroke: var(--lm-terracotta); stroke-width: 2; stroke-dasharray: 5 4; }
+.lm-radar .shape-now { fill: rgba(15, 118, 110, 0.2); stroke: var(--lm-teal); stroke-width: 2.5; }
+.lm-radar .axis-label { font-family: var(--lm-font-body); font-size: 11px; font-weight: 500; fill: var(--lm-ink-soft); }
+
+/* --- Aula / grupo ----------------------------------------------------------- */
+.lm-grupo {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-3) var(--lm-sp-4);
+  border-radius: var(--lm-radius);
+  background: var(--lm-white);
+  border: 1px solid var(--lm-line);
+  transition: transform var(--lm-dur) var(--lm-ease);
+}
+.lm-grupo:hover { transform: translateX(3px); }
+.lm-grupo__dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--lm-clima-despejado); }
+.lm-grupo__dot[data-clima="parcial"] { background: var(--lm-clima-parcial); }
+.lm-grupo__dot[data-clima="nublado"] { background: var(--lm-clima-nublado); }
+.lm-grupo__dot[data-clima="lluvia"] { background: var(--lm-clima-lluvia); }
+.lm-grupo__name { font-family: var(--lm-font-display); font-weight: 600; color: var(--lm-emerald-900); font-size: 0.95rem; }
+.lm-grupo__meta { font-size: var(--lm-fs-caption); color: var(--lm-ink-muted); }
+.lm-grupo__side { margin-left: auto; text-align: right; }
+
+/* Umbral mínimo: si el grupo es pequeño, no se muestra nada */
+.lm-grupo--oculto { opacity: 0.62; }
+.lm-grupo--oculto .lm-grupo__name { color: var(--lm-ink-muted); }
+
+/* --- Red de confianza -------------------------------------------------------- */
+.lm-red {
+  display: grid;
+  gap: var(--lm-sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+
+.lm-contacto {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-4);
+  border-radius: var(--lm-radius);
+  background: var(--lm-white);
+  border: 1.5px solid var(--lm-line);
+  transition: all var(--lm-dur) var(--lm-ease);
+}
+.lm-contacto.is-excluido { background: var(--lm-cream-deep); border-style: dashed; opacity: 0.78; }
+.lm-contacto__info { min-width: 0; }
+.lm-contacto__name { font-family: var(--lm-font-display); font-weight: 600; color: var(--lm-emerald-900); line-height: 1.2; }
+.lm-contacto__rel { font-size: var(--lm-fs-caption); color: var(--lm-ink-muted); }
+.lm-contacto__actions { margin-left: auto; display: flex; align-items: center; gap: var(--lm-sp-2); }
+
+.lm-orden {
+  width: 26px; height: 26px; flex: none;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--lm-emerald);
+  color: var(--lm-cream);
+  font-family: var(--lm-font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Cadena visual de escalamiento */
+.lm-escalera { display: grid; gap: var(--lm-sp-3); }
+.lm-escalera__paso {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-3) var(--lm-sp-4);
+  border-radius: var(--lm-radius);
+  background: var(--lm-cream-soft);
+  border: 1px solid var(--lm-line);
+  position: relative;
+}
+.lm-escalera__paso:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 33px; bottom: -13px;
+  width: 2px; height: 12px;
+  background: var(--lm-emerald-100);
+}
+.lm-escalera__icon {
+  width: 38px; height: 38px; flex: none;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--lm-emerald-050);
+  color: var(--lm-emerald);
+  border: 1px solid var(--lm-emerald-100);
+}
+
+/* --- Cápsulas semanales (formato reel) --------------------------------------- */
+.lm-capsulas {
+  display: flex;
+  gap: var(--lm-sp-3);
+  overflow-x: auto;
+  padding-bottom: var(--lm-sp-3);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.lm-capsula {
+  flex: 0 0 auto;
+  width: min(190px, 58vw);
+  aspect-ratio: 9 / 14;
+  border-radius: var(--lm-radius-lg);
+  padding: var(--lm-sp-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--lm-sp-2);
+  color: var(--lm-cream);
+  background: linear-gradient(168deg, var(--lm-teal), var(--lm-emerald-900));
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: transform var(--lm-dur) var(--lm-ease), box-shadow var(--lm-dur) var(--lm-ease);
+  position: relative;
+  overflow: hidden;
+}
+.lm-capsula:hover { transform: translateY(-4px); box-shadow: var(--lm-shadow-lg); }
+.lm-capsula::before {
+  content: "";
+  position: absolute;
+  top: -30%; right: -30%;
+  width: 82%; aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(254, 247, 229, 0.1);
+}
+.lm-capsula--warm { background: linear-gradient(168deg, #d9601f, var(--lm-terracotta-600)); }
+.lm-capsula__tag {
+  align-self: flex-start;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: var(--lm-radius-pill);
+  background: rgba(254, 247, 229, 0.18);
+  position: relative;
+}
+.lm-capsula__title { font-family: var(--lm-font-display); font-weight: 700; font-size: 1.02rem; line-height: 1.22; position: relative; }
+.lm-capsula__meta { font-size: var(--lm-fs-caption); color: rgba(254, 247, 229, 0.72); position: relative; }
+
+/* --- Mapa de cobertura ------------------------------------------------------- */
+.lm-cobertura {
+  display: grid;
+  gap: var(--lm-sp-2);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+}
+.lm-cobertura__item {
+  padding: var(--lm-sp-3);
+  border-radius: var(--lm-radius-sm);
+  background: var(--lm-cream-soft);
+  border: 1px solid var(--lm-line);
+  text-align: center;
+}
+.lm-cobertura__pct { font-family: var(--lm-font-display); font-weight: 700; color: var(--lm-emerald); }

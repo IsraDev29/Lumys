@@ -1,13 +1,105 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
+// El proyecto es CommonJS puro y sin paso de compilación. El generador nuevo
+// ("prisma-client") emite ESM/TypeScript, que no se puede require(), así que
+// usamos el generador clásico que publica CJS en node_modules/@prisma/client.
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model CasoOrientador {
+  id               Int            @id @default(autoincrement())
+  senalId          Int            @unique
+  orientadorId     Int
+  estado           String         @default("abierto")
+  planSeguridad    String?
+  accionRegistrada String?
+  fechaCierre      DateTime?
+  creadoEn         DateTime       @default(now())
+  Usuario          Usuario        @relation(fields: [orientadorId], references: [id])
+  SenalDetectada   SenalDetectada @relation(fields: [senalId], references: [id])
+  Derivacion       Derivacion[]
+}
+
+model CheckIn {
+  id             Int      @id @default(autoincrement())
+  estudianteId   Int
+  fecha          DateTime @default(now())
+  respuestasJson String
+  textoLibre     String?
+  resumenIa      String?
+  icvePuntaje    Int?
+  Usuario        Usuario  @relation(fields: [estudianteId], references: [id])
+}
+
+model Derivacion {
+  id                 Int            @id @default(autoincrement())
+  casoId             Int
+  servicioExterno    String
+  fecha              DateTime       @default(now())
+  confirmacion7dias  Boolean        @default(false)
+  confirmacion30dias Boolean        @default(false)
+  CasoOrientador     CasoOrientador @relation(fields: [casoId], references: [id])
+}
+
+model Institucion {
+  id        Int       @id @default(autoincrement())
+  nombre    String
+  municipio String?
+  creadoEn  DateTime  @default(now())
+  Usuario   Usuario[]
+}
+
+model LineaBase {
+  id                Int      @id @default(autoincrement())
+  estudianteId      Int      @unique
+  promedioIcveMovil Float?
+  patronNormalJson  String?
+  actualizadoEn     DateTime
+  Usuario           Usuario  @relation(fields: [estudianteId], references: [id])
+}
+
+model RedDeApoyo {
+  id                                       Int      @id @default(autoincrement())
+  estudianteId                             Int
+  contactoId                               Int
+  orden                                    Int      @default(1)
+  excluidoDeAlerta                         Boolean  @default(false)
+  creadoEn                                 DateTime @default(now())
+  Usuario_RedDeApoyo_contactoIdToUsuario   Usuario  @relation("RedDeApoyo_contactoIdToUsuario", fields: [contactoId], references: [id])
+  Usuario_RedDeApoyo_estudianteIdToUsuario Usuario  @relation("RedDeApoyo_estudianteIdToUsuario", fields: [estudianteId], references: [id])
+}
+
+model SenalDetectada {
+  id                      Int             @id @default(autoincrement())
+  estudianteId            Int
+  deltaIcve               Float?
+  componentePatronJson    String?
+  lenguajeRiesgoExplicito Boolean         @default(false)
+  semanasSostenidas       Int             @default(0)
+  nivelRespuesta          Int
+  creadoEn                DateTime        @default(now())
+  CasoOrientador          CasoOrientador?
+  Usuario                 Usuario         @relation(fields: [estudianteId], references: [id])
+}
+
+model Usuario {
+  id                                          Int              @id @default(autoincrement())
+  nombre                                      String
+  contacto                                    String           @unique
+  passwordHash                                String
+  rol                                         String           @default("USUARIO")
+  perfil                                      String?
+  institucionId                               Int?
+  creadoEn                                    DateTime         @default(now())
+  activo                                      Boolean          @default(true)
+  CasoOrientador                              CasoOrientador[]
+  CheckIn                                     CheckIn[]
+  LineaBase                                   LineaBase?
+  RedDeApoyo_RedDeApoyo_contactoIdToUsuario   RedDeApoyo[]     @relation("RedDeApoyo_contactoIdToUsuario")
+  RedDeApoyo_RedDeApoyo_estudianteIdToUsuario RedDeApoyo[]     @relation("RedDeApoyo_estudianteIdToUsuario")
+  SenalDetectada                              SenalDetectada[]
+  Institucion                                 Institucion?     @relation(fields: [institucionId], references: [id])
 }

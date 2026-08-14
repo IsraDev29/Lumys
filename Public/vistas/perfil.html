@@ -1,0 +1,122 @@
+<!-- Vista: cuenta, privacidad y transparencia -->
+<section class="lm-stack">
+
+  <div class="lm-page-head">
+    <div class="lm-page-head__text">
+      <h1>Tu cuenta</h1>
+      <p>Acá ves exactamente <strong>qué se comparte, con quién y cuándo</strong>. La transparencia no es un trámite: es lo que sostiene todo lo demás.</p>
+    </div>
+  </div>
+
+  <article class="lm-card">
+    <div class="d-flex flex-wrap align-items-center gap-4">
+      <span class="lm-avatar lm-avatar--lg" id="perfil-avatar">—</span>
+      <div class="flex-grow-1" style="min-width:200px">
+        <h2 class="mb-1" id="perfil-nombre">—</h2>
+        <p class="lm-caption mb-0" id="perfil-rol"></p>
+        <p class="lm-caption mb-0" id="perfil-centro"></p>
+      </div>
+      <a class="lm-btn lm-btn--ghost lm-btn--sm" href="#/red">
+        <i class="bi bi-diagram-3" aria-hidden="true"></i> Mi red de confianza
+      </a>
+    </div>
+  </article>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-7">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Qué se comparte</h2>
+            <p class="lm-caption mb-0">Podés cambiar esto cuando querás.</p>
+          </div>
+        </div>
+
+        <ul class="lm-list">
+          <li class="lm-list__item">
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-semibold" style="font-size:.95rem">Resumen descriptivo a mi orientadora</p>
+              <p class="lm-caption mb-0">Conducta observable y ventana de tiempo. Nunca tu texto literal.</p>
+            </div>
+            <label class="lm-switch">
+              <input type="checkbox" data-pref="resumen">
+              <span class="lm-switch__track"></span>
+              <span class="visually-hidden">Compartir resumen con la orientadora</span>
+            </label>
+          </li>
+          <li class="lm-list__item">
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-semibold" style="font-size:.95rem">Avisos a mi familia</p>
+              <p class="lm-caption mb-0">Solo si una señal se sostiene y solo tras evaluar que sea seguro.</p>
+            </div>
+            <label class="lm-switch">
+              <input type="checkbox" data-pref="familia">
+              <span class="lm-switch__track"></span>
+              <span class="visually-hidden">Permitir avisos a mi familia</span>
+            </label>
+          </li>
+          <li class="lm-list__item">
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-semibold" style="font-size:.95rem">Recordatorio diario del check-in</p>
+              <p class="lm-caption mb-0">Un mensaje por WhatsApp, a la hora que elijas.</p>
+            </div>
+            <label class="lm-switch">
+              <input type="checkbox" data-pref="recordatorio">
+              <span class="lm-switch__track"></span>
+              <span class="visually-hidden">Recibir recordatorio diario</span>
+            </label>
+          </li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Quién ve qué</h2>
+            <p class="lm-caption mb-0">Matriz de permisos del sistema.</p>
+          </div>
+        </div>
+
+        <div class="lm-table-wrap">
+          <table class="lm-table lm-permisos" style="min-width:0">
+            <thead>
+              <tr><th>Rol</th><th>Tu texto</th><th>Resumen</th><th>Agregados</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Vos</td><td><i class="bi bi-check-lg si"></i></td><td><i class="bi bi-check-lg si"></i></td><td><i class="bi bi-dash no"></i></td></tr>
+              <tr><td>Orientadora</td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-check-lg si"></i></td><td><i class="bi bi-check-lg si"></i></td></tr>
+              <tr><td>Psicólogo</td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-check-lg si"></i></td><td><i class="bi bi-check-lg si"></i></td></tr>
+              <tr><td>Familia</td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-check-lg si"></i></td><td><i class="bi bi-x-lg no"></i></td></tr>
+              <tr><td>Colegio</td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-check-lg si"></i></td></tr>
+              <tr><td>Equipo Lumys</td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-x-lg no"></i></td><td><i class="bi bi-check-lg si"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="lm-caption mt-3 mb-0">“Agregados” significa métricas de todo el centro, sin nombres y sin casos individuales.</p>
+      </article>
+    </div>
+  </div>
+
+  <article class="lm-card lm-card--cream">
+    <div class="lm-card__head">
+      <div>
+        <h2>Tus datos</h2>
+        <p class="lm-caption mb-0">Son tuyos. Podés llevártelos o borrarlos.</p>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="lm-btn lm-btn--ghost lm-btn--sm" type="button"
+              onclick="LM.toast('La exportación llega con el módulo de datos.', { tipo: 'info' })">
+        <i class="bi bi-download" aria-hidden="true"></i> Descargar mis registros
+      </button>
+      <button class="lm-btn lm-btn--ghost lm-btn--sm" type="button" id="perfil-borrar">
+        <i class="bi bi-trash3" aria-hidden="true"></i> Borrar mis check-ins de este dispositivo
+      </button>
+      <a class="lm-btn lm-btn--ghost lm-btn--sm" href="#/marca">
+        <i class="bi bi-palette" aria-hidden="true"></i> Manual de marca
+      </a>
+    </div>
+  </article>
+</section>

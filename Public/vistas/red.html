@@ -1,0 +1,113 @@
+<!-- Vista: mi red de confianza -->
+<section class="lm-stack">
+
+  <div class="lm-page-head">
+    <div class="lm-page-head__text">
+      <h1>Mi red de confianza</h1>
+      <p>Estas son las personas que podrían recibir un aviso si algo se sostiene en el tiempo. <strong>Vos armás la lista y vos la cambiás.</strong> Nadie más.</p>
+    </div>
+    <button class="lm-btn lm-btn--sm" type="button" id="red-agregar">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar a alguien
+    </button>
+  </div>
+
+  <div class="lm-note lm-note--teal">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    <div>
+      <strong>El adulto de confianza no tiene que ser un profesional.</strong>
+      Puede ser un tío, un entrenador, una prima, un líder religioso. Lo importante es
+      que sea alguien con quien te sentís tranquilo hablando.
+    </div>
+  </div>
+
+  <article class="lm-card">
+    <div class="lm-card__head">
+      <div>
+        <h2>Tu lista, en orden</h2>
+        <p class="lm-caption mb-0">Si el primero no responde, se busca al segundo. Y así.</p>
+      </div>
+    </div>
+    <div class="lm-red" id="red-lista"></div>
+  </article>
+
+  <article class="lm-card">
+    <div class="lm-card__head">
+      <div>
+        <h2>Qué pasa si nadie de tu lista responde</h2>
+        <p class="lm-caption mb-0">El sistema no se queda callado, pero tampoco insiste con quien vos excluiste.</p>
+      </div>
+    </div>
+
+    <div class="lm-escalera">
+      <div class="lm-escalera__paso">
+        <span class="lm-escalera__icon"><i class="bi bi-1-circle"></i></span>
+        <div>
+          <p class="mb-0 fw-semibold" style="font-size:.95rem">Se busca a la primera persona de tu lista</p>
+          <p class="lm-caption mb-0">Con una descripción de lo que cambió, nunca con una etiqueta.</p>
+        </div>
+      </div>
+      <div class="lm-escalera__paso">
+        <span class="lm-escalera__icon"><i class="bi bi-2-circle"></i></span>
+        <div>
+          <p class="mb-0 fw-semibold" style="font-size:.95rem">Si no responde, sigue la orientadora del colegio</p>
+          <p class="lm-caption mb-0">Ella conversa con vos primero. Siempre.</p>
+        </div>
+      </div>
+      <div class="lm-escalera__paso">
+        <span class="lm-escalera__icon" style="background:var(--lm-terracotta-050); color:var(--lm-terracotta); border-color:var(--lm-terracotta-100)">
+          <i class="bi bi-telephone-inbound"></i>
+        </span>
+        <div>
+          <p class="mb-0 fw-semibold" style="font-size:.95rem">Si nadie responde, o si tu familia no es un lugar seguro</p>
+          <p class="lm-caption mb-0">Se escala directo a la <strong>Línea 133 (MIFAN)</strong>, sin insistir con la familia.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="lm-card lm-card--cream">
+    <h2>Lo que ellos reciben — y lo que no</h2>
+    <div class="lm-grid lm-grid--2 mt-3">
+      <div class="lm-note lm-note--teal">
+        <i class="bi bi-check-circle" aria-hidden="true"></i>
+        <div>
+          <strong>Sí reciben</strong>
+          <p class="lm-caption mb-0">“En las últimas tres semanas ha entregado menos tareas de lo habitual y dejó el equipo de fútbol. No sabemos la causa. Sería bueno conversar con él esta semana, sin presionarlo.”</p>
+        </div>
+      </div>
+      <div class="lm-note">
+        <i class="bi bi-x-circle" aria-hidden="true"></i>
+        <div>
+          <strong>Nunca reciben</strong>
+          <p class="lm-caption mb-0">“Presenta síntomas depresivos y riesgo moderado.” Ni puntajes, ni etiquetas, ni lo que escribiste palabra por palabra.</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<!-- Diálogo para agregar contacto -->
+<div class="modal fade" id="modal-contacto" tabindex="-1" aria-labelledby="modal-contacto-titulo" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:var(--lm-radius-lg); border-color:var(--lm-line)">
+      <div class="modal-header" style="border-color:var(--lm-line)">
+        <h2 class="modal-title h5 mb-0" id="modal-contacto-titulo">Agregar a alguien de confianza</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="lm-field">
+          <label class="lm-label" for="contacto-nombre">¿Cómo se llama?</label>
+          <input class="lm-input" type="text" id="contacto-nombre" placeholder="Tía Lucía">
+        </div>
+        <div class="lm-field mb-0">
+          <label class="lm-label" for="contacto-relacion">¿Quién es para vos?</label>
+          <input class="lm-input" type="text" id="contacto-relacion" placeholder="Tía / me llevo bien con ella">
+        </div>
+      </div>
+      <div class="modal-footer" style="border-color:var(--lm-line)">
+        <button class="lm-btn lm-btn--ghost lm-btn--sm" type="button" data-bs-dismiss="modal">Cancelar</button>
+        <button class="lm-btn lm-btn--sm" type="button" id="contacto-guardar">Agregar a mi red</button>
+      </div>
+    </div>
+  </div>
+</div>

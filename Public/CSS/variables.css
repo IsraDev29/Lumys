@@ -1,0 +1,112 @@
+/* ==========================================================================
+   Lumys* — Tokens de diseño
+   Fuente: Manual de Marca v2.0 (2026) + Mini Manual de Marca (Figma)
+   Regla de proporción: 60% Cream · 30% Emerald/Teal · 10% Terracotta
+   ========================================================================== */
+
+:root {
+  /* --- Paleta oficial ---------------------------------------------------- */
+  --lm-emerald: #065f46;   /* Primario: CTA, navegación, texto de marca      */
+  --lm-teal: #0f766e;      /* Secundario: hover, enlaces activos, apoyo      */
+  --lm-terracotta: #c2410c;/* Acento cálido: logros, rachas, el asterisco    */
+  --lm-cream: #fef7e5;     /* Fondo suave: descanso visual                   */
+
+  /* --- Derivados (mismo tono, distinta luminosidad) ---------------------- */
+  --lm-emerald-900: #033227;
+  --lm-emerald-700: #054f3a;
+  --lm-emerald-100: #d7e9e2;
+  --lm-emerald-050: #eef6f3;
+
+  --lm-teal-300: #5aa79f;
+  --lm-teal-100: #d5e9e6;
+
+  --lm-terracotta-600: #a9370a;
+  --lm-terracotta-100: #f8e2d6;
+  --lm-terracotta-050: #fdf1ea;
+
+  --lm-cream-deep: #f7ecd3;
+  --lm-cream-soft: #fffcf5;
+
+  /* --- Neutros ----------------------------------------------------------- */
+  --lm-ink: #16241f;          /* texto principal                            */
+  --lm-ink-soft: #4b5c56;     /* texto secundario                           */
+  --lm-ink-muted: #7d8b86;    /* captions, metadatos                        */
+  --lm-line: #e4ded0;         /* bordes sobre cream                         */
+  --lm-line-strong: #d3cab6;
+  --lm-white: #ffffff;
+
+  /* --- Semánticos del producto -------------------------------------------
+     Los niveles NO son diagnósticos: describen la respuesta del sistema.   */
+  --lm-nivel-1: #0f766e;   /* Conversar  */
+  --lm-nivel-2: #b45309;   /* Acompañar  */
+  --lm-nivel-3: #b3261e;   /* Derivar    */
+  --lm-nivel-1-bg: #e3f0ee;
+  --lm-nivel-2-bg: #fbeed8;
+  --lm-nivel-3-bg: #fae4e2;
+
+  /* Clima emocional del gemelo digital (nunca un puntaje, un clima) */
+  --lm-clima-despejado: #3ba58f;
+  --lm-clima-parcial: #7fb8a6;
+  --lm-clima-nublado: #8c9c96;
+  --lm-clima-lluvia: #6d7f9a;
+
+  /* --- Tipografía --------------------------------------------------------- */
+  --lm-font-display: "Quicksand", "Trebuchet MS", system-ui, sans-serif;
+  --lm-font-body: "Work Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --lm-fs-h1: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
+  --lm-fs-h2: clamp(1.25rem, 1.05rem + 0.9vw, 1.65rem);
+  --lm-fs-h3: clamp(1.05rem, 0.98rem + 0.4vw, 1.25rem);
+  --lm-fs-body: 1rem;
+  --lm-fs-sm: 0.9rem;
+  --lm-fs-caption: 0.78rem;
+
+  /* --- Espaciado (escala de 4) -------------------------------------------- */
+  --lm-sp-1: 0.25rem;
+  --lm-sp-2: 0.5rem;
+  --lm-sp-3: 0.75rem;
+  --lm-sp-4: 1rem;
+  --lm-sp-5: 1.5rem;
+  --lm-sp-6: 2rem;
+  --lm-sp-7: 3rem;
+  --lm-sp-8: 4rem;
+
+  /* --- Radios: formas suaves y orgánicas, nunca esquinas duras ------------ */
+  --lm-radius-sm: 10px;
+  --lm-radius: 16px;
+  --lm-radius-lg: 24px;
+  --lm-radius-xl: 32px;
+  --lm-radius-pill: 999px;
+
+  /* --- Sombras: apoyo suave, sin biseles ni efectos duros ----------------- */
+  --lm-shadow-sm: 0 1px 2px rgba(6, 95, 70, 0.06), 0 2px 8px rgba(6, 95, 70, 0.05);
+  --lm-shadow: 0 4px 14px rgba(6, 95, 70, 0.08), 0 1px 3px rgba(6, 95, 70, 0.06);
+  --lm-shadow-lg: 0 18px 42px rgba(3, 50, 39, 0.14);
+  --lm-shadow-warm: 0 10px 26px rgba(194, 65, 12, 0.18);
+
+  /* --- Movimiento --------------------------------------------------------- */
+  --lm-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --lm-dur-fast: 140ms;
+  --lm-dur: 240ms;
+  --lm-dur-slow: 520ms;
+
+  /* --- Layout ------------------------------------------------------------- */
+  --lm-sidebar-w: 264px;
+  --lm-topbar-h: 66px;
+  --lm-bottomnav-h: 68px;
+  --lm-container: 1180px;
+
+  /* --- Puente con Bootstrap 5.3 ------------------------------------------ */
+  --bs-primary: var(--lm-emerald);
+  --bs-primary-rgb: 6, 95, 70;
+  --bs-body-bg: var(--lm-cream);
+  --bs-body-color: var(--lm-ink);
+  --bs-body-font-family: var(--lm-font-body);
+  --bs-border-color: var(--lm-line);
+  --bs-border-radius: var(--lm-radius);
+  --bs-border-radius-lg: var(--lm-radius-lg);
+  --bs-border-radius-sm: var(--lm-radius-sm);
+  --bs-link-color: var(--lm-teal);
+  --bs-link-hover-color: var(--lm-emerald);
+  --bs-focus-ring-color: rgba(15, 118, 110, 0.35);
+}

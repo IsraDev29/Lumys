@@ -1,0 +1,73 @@
+<!-- Vista: huella emocional del estudiante (línea base ipsativa) -->
+<section class="lm-stack">
+
+  <div class="lm-page-head">
+    <div class="lm-page-head__text">
+      <h1>Tu huella</h1>
+      <p>Todo lo que ves acá se compara con <strong>vos mismo</strong>. No hay puntaje, no hay promedio del salón, no hay nota.</p>
+    </div>
+    <div class="lm-segmented" id="rango" role="group" aria-label="Rango de tiempo">
+      <button class="lm-segmented__btn is-active" type="button" data-rango="7">7 días</button>
+      <button class="lm-segmented__btn" type="button" data-rango="30">30 días</button>
+    </div>
+  </div>
+
+  <article class="lm-card">
+    <div class="lm-card__head">
+      <div>
+        <h2>Cómo se movió tu semana</h2>
+        <p class="lm-caption mb-0">La línea punteada naranja es tu propio promedio.</p>
+      </div>
+      <div class="lm-card__head-actions">
+        <span class="lm-chip lm-chip--neutral"><i class="bi bi-info-circle"></i> Sin diagnóstico</span>
+      </div>
+    </div>
+    <div id="grafico"></div>
+  </article>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-7">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Tu constancia</h2>
+            <p class="lm-caption mb-0">Mide aparecer, nunca cómo te sentiste.</p>
+          </div>
+        </div>
+        <div class="lm-heatmap" id="constancia-mes"></div>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+          <span class="lm-heatmap__legend">
+            <i style="background:var(--lm-cream-deep); border:1px solid var(--lm-line)"></i> sin registro
+          </span>
+          <span class="lm-heatmap__legend"><i style="background:var(--lm-teal-100)"></i> registro corto</span>
+          <span class="lm-heatmap__legend"><i style="background:var(--lm-emerald)"></i> registro completo</span>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Contra tu propio promedio</h2>
+            <p class="lm-caption mb-0">Últimos 7 días.</p>
+          </div>
+        </div>
+        <div class="lm-ipsativa" id="ipsativa-historial"></div>
+      </article>
+    </div>
+  </div>
+
+  <article class="lm-card">
+    <div class="lm-card__head">
+      <div>
+        <h2>Lo que escribiste</h2>
+        <p class="lm-caption mb-0">Solo vos ves esto. Ni el colegio ni tu familia lo leen.</p>
+      </div>
+      <div class="lm-card__head-actions">
+        <span class="lm-chip"><i class="bi bi-lock"></i> Privado</span>
+      </div>
+    </div>
+    <div id="entradas"></div>
+  </article>
+</section>

@@ -1,0 +1,68 @@
+<!-- Vista: constancia, rachas e insignias -->
+<section class="lm-stack">
+
+  <div class="lm-page-head">
+    <div class="lm-page-head__text">
+      <h1>Tu constancia</h1>
+      <p>Acá se premia <strong>aparecer</strong>, nunca cómo te sentiste. Un día pesado suma igual que un día bueno.</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-5">
+      <article class="lm-card h-100 text-center">
+        <div class="lm-racha justify-content-center mb-4">
+          <span class="lm-racha__flame"><i class="bi bi-fire"></i></span>
+          <div class="text-start">
+            <p class="lm-racha__num mb-0"><span id="racha-num">0</span> días</p>
+            <p class="lm-caption mb-0">seguidos</p>
+          </div>
+        </div>
+        <p class="lm-muted mb-4" style="font-size:.95rem">
+          No es un puntaje ni una nota. Es solo la prueba de que seguís acá.
+        </p>
+        <div class="lm-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div class="lm-stat">
+            <span class="lm-stat__value" id="logros-total">0</span>
+            <span class="lm-stat__label">insignias ganadas</span>
+          </div>
+          <div class="lm-stat">
+            <span class="lm-stat__value">35</span>
+            <span class="lm-stat__label">días registrados</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-12 col-lg-7">
+      <article class="lm-card h-100">
+        <div class="lm-card__head">
+          <div>
+            <h2>Tus últimas 5 semanas</h2>
+            <p class="lm-caption mb-0">Cada cuadro es un día en que apareciste.</p>
+          </div>
+        </div>
+        <div class="lm-heatmap" id="constancia"></div>
+      </article>
+    </div>
+  </div>
+
+  <article class="lm-card">
+    <div class="lm-card__head">
+      <div>
+        <h2>Insignias</h2>
+        <p class="lm-caption mb-0">Se ganan por constancia y por cuidarte, nunca por estar bien.</p>
+      </div>
+    </div>
+    <div class="lm-grid lm-grid--4" id="insignias"></div>
+  </article>
+
+  <div class="lm-note">
+    <i class="bi bi-lightbulb" aria-hidden="true"></i>
+    <div>
+      <strong>Por qué no hay ranking.</strong>
+      Competir por “estar mejor” convierte el ánimo en algo que hay que fingir.
+      Acá nadie compara tu semana con la de otro.
+    </div>
+  </div>
+</section>
