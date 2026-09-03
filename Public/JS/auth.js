@@ -78,9 +78,10 @@ App.controladores.acceso = (raiz) => {
       const res = await API.login(email, password);
       if (res.token) API.token.set(res.token);
 
-      // El backend todavía no devuelve el perfil en todos los casos:
-      // se deduce del correo para que la demostración siga siendo navegable.
-      const perfil = res.usuario?.tipoUsuario?.toLowerCase?.()
+      // El perfil lo manda el backend. Solo se recurre al correo cuando la
+      // respuesta viene del respaldo de demostración (servidor caído).
+      const perfil = res.usuario?.perfil?.toLowerCase?.()
+        || (res.usuario?.rol === 'ADMIN' ? 'admin' : null)
         || (/orienta/.test(email) ? 'orientador'
           : /psico/.test(email) ? 'psicologo'
             : /admin|lumys/.test(email) ? 'admin' : 'estudiante');
@@ -124,8 +125,11 @@ App.controladores.acceso = (raiz) => {
         email,
         nombre,
         password,
-        edad: edad ? Number(edad) : undefined,
-        tipoUsuario: perfil === 'estudiante' ? 'Estudiante' : 'Docente',
+        // Los radios traen 'estudiante' / 'orientador' y el backend espera el
+        // enum Perfil en mayúsculas. Antes se mandaba 'Docente' para cualquier
+        // opción que no fuera estudiante, así que un orientador quedaba mal
+        // registrado.
+        perfil: perfil.toUpperCase(),
         consentimiento: true,
       });
 

@@ -1,13 +1,17 @@
 const { z } = require('zod');
 
-// `edad` y `consentimiento` se validan pero NO se persisten: la tabla `usuarios`
-// no tiene columnas para ellos. Ver la nota en auth.service.js.
+// Estos valores son los del enum `Perfil` en prisma/schema.prisma. Antes eran
+// texto libre ('Estudiante', 'Docente', 'Administrador'), que no coincidía con
+// lo que ya había en la base de datos.
+const PERFILES = ['ESTUDIANTE', 'DOCENTE', 'ORIENTADOR', 'PSICOLOGO', 'FAMILIA', 'COMPANERO'];
+
+// `rol` no se acepta a propósito: si el cliente pudiera enviarlo, cualquiera
+// podría crearse una cuenta ADMIN. Zod descarta las claves no declaradas.
 const registrarSchema =z.object({
     email: z.string().email('Email inválido'),
     nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
-    edad: z.number().int().positive().optional(),
-    tipoUsuario: z.enum(['Estudiante', 'Docente', 'Administrador']),
+    perfil: z.enum(PERFILES, {errorMap: () => ({message: `Perfil inválido. Valores: ${PERFILES.join(', ')}`})}),
     institucionId: z.number().int().positive().optional(),
     consentimiento: z.boolean().refine((v) => v === true, 'Debe aceptar los términos y condiciones'),
 });
@@ -17,4 +21,4 @@ const loginSchema = z.object({
     password: z.string().min(1, 'La contraseña es requerida'),
 });
 
-module.exports = { registrarSchema, loginSchema };
+module.exports = { registrarSchema, loginSchema, PERFILES };

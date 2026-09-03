@@ -1,71 +1,89 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const {PrismaClient} = require('@prisma/client')
-const {PrismaPg} = require('@prisma/adapter-pg')
-
-// Prisma 7 ya no acepta `url` en el datasource: la conexión se pasa al cliente
-// mediante un driver adapter.
-const adapter = new PrismaPg({connectionString: process.env.DATABASE_URL})
-const prisma = new PrismaClient({adapter})
+const prisma = require('../db')
 
 const SALT_ROUNDS = 10
 
-// La tabla `usuarios` real guarda el identificador de login en `contacto` y el
-// tipo de usuario en `perfil`. La API pública sigue hablando de `email` y
-// `tipoUsuario`, así que la traducción vive aquí.
-function aRespuestaPublica(usuario){
-    const {passwordHash: _, contacto, perfil, ...resto} = usuario;
-    return {...resto, email: contacto, tipoUsuario: perfil};
-}
+// Nunca devolvemos el hash de la contraseña al cliente.
+const CAMPOS_PUBLICOS = {
+    id: true,
+    nombre: true,
+    email: true,
+    rol: true,
+    perfil: true,
+    institucionId: true,
+    activo: true,
+    creadoEn: true,
+};
 
 async function registrarUsuario(datos){
-    const {email, nombre, tipoUsuario, institucionId, password, rol} = datos
+    // `rol` se omite a propósito: si viniera del cliente, cualquiera podría
+    // registrarse como ADMIN. Solo se asigna desde la base o por un admin.
+    const {email, nombre, perfil, institucionId, password, consentimiento} = datos
 
-    const existente = await prisma.usuario.findUnique({where : {contacto: email}});
+    const existente = await prisma.usuario.findUnique({where : {email}});
     if (existente){
         throw new Error('EMAIL YA REGISTRADO');
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const usuario = await prisma.usuario.create({
+    return prisma.usuario.create({
         data: {
-            contacto: email,
+            email,
             nombre,
-            perfil: tipoUsuario,
+            perfil,
             institucionId,
             passwordHash,
-            rol: rol || 'USUARIO'
-        }
-    })
-
-    return aRespuestaPublica(usuario);
+            consentimiento,
+            fechaConsentimiento: consentimiento ? new Date() : null,
+        },
+        select: CAMPOS_PUBLICOS,
+    });
 }
 
 async function verificarCredenciales(email, password){
-    const usuario = await prisma.usuario.findUnique({where: {contacto: email}});
+    const usuario = await prisma.usuario.findUnique({where: {email}});
 
     if(!usuario) return null;
+
+    // Una cuenta desactivada no debe poder iniciar sesión aunque la clave sea
+    // correcta.
+    if(!usuario.activo) return null;
 
     const passwordCorrecto = await bcrypt.compare(password, usuario.passwordHash);
 
     if(!passwordCorrecto) return null;
 
-    return aRespuestaPublica(usuario);
+    const {passwordHash: _, ...usuarioSinPassword} = usuario;
+    return usuarioSinPassword;
+}
+
+function obtenerUsuario(id){
+    return prisma.usuario.findUnique({
+        where: {id},
+        select: {...CAMPOS_PUBLICOS, institucion: {select: {id: true, nombre: true}}},
+    });
 }
 
 function generarToken(usuario){
+    // El token lleva rol, perfil e institución porque son los tres datos con
+    // los que se deciden los permisos en cada petición.
     const payload = {
         id: usuario.id,
         rol: usuario.rol,
-        tipoUsuario: usuario.tipoUsuario,
+        perfil: usuario.perfil,
+        institucionId: usuario.institucionId,
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '1h'});
+    return jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+    });
 }
 
 module.exports ={
     registrarUsuario,
     verificarCredenciales,
+    obtenerUsuario,
     generarToken,
 };

@@ -121,7 +121,40 @@ Frontend: HTML + JS vainilla + Bootstrap (fetch)
 **Patrón:** arquitectura en capas (routes → controller → service → Prisma) dentro de cada módulo, organizada por dominio.
 
 ### Módulo IA/NLP
-El módulo `ia` llama a la API de Claude para analizar el `texto_usuario` de cada registro y devolver un sentimiento, factores de riesgo explicativos y una sugerencia del **Coach IA** (recomendación personalizada para el propio estudiante). De forma opcional y con consentimiento explícito, también analiza características de voz (pausas, tono, velocidad del habla) como una segunda fuente de datos. Ambos resultados alimentan el cálculo del `riesgo_emocional` dentro del ICVE y se guardan en `factores_explicativos` (JSON) para mantener trazabilidad y explicabilidad.
+
+El módulo `ia` hace dos cosas distintas, y conviene no confundirlas.
+
+**1. Conduce el check-in.** Las preguntas no están precargadas: cada intercambio
+lo genera Claude en `POST /ia/checkin/turno`, con lo que se dijo en esa misma
+sesión y una paráfrasis de los días anteriores como contexto. Un guion fijo se
+aprende de memoria en tres días y el registro pasa a sentirse un trámite — que
+es la forma más rápida de que un estudiante deje de aparecer. El modelo elige
+qué dimensión explorar, con qué ángulo y en qué formato (botones, escala o
+texto libre), y decide cuándo cerrar.
+
+**2. Explica el resultado.** Al cerrar, analiza el conjunto y devuelve
+sentimiento, factores explicativos, el mensaje del **Coach IA** para el propio
+estudiante y una nota parafraseada para el orientador. Opcionalmente, con
+consentimiento explícito, analiza características prosódicas de una nota de voz
+(pausas, tono, velocidad) — nunca el audio ni una transcripción.
+
+Tres límites deliberados sobre lo que la IA **no** hace:
+
+- **No calcula el puntaje.** Cada opción viene etiquetada con un valor de 1 a 5
+  y el ICVE se computa en `icve.service.js` con una fórmula fija. Si el número
+  lo pusiera el modelo, dos respuestas iguales podrían puntuar distinto y la
+  serie histórica dejaría de ser comparable consigo misma.
+- **No decide sola el nivel de riesgo.** `ia.seguridad.js` mantiene un léxico
+  determinista que pone el piso; el modelo puede subir ese nivel pero nunca
+  bajarlo. Si la API está caída o devuelve algo raro, la detección sigue
+  funcionando.
+- **No escribe el mensaje de contención.** Ante riesgo explícito el texto es
+  fijo y los contactos salen del catálogo `ServicioExterno`. En el único momento
+  en que de verdad importa lo que el estudiante lee, nada depende de que el
+  modelo esté teniendo un buen día.
+
+Sin `ANTHROPIC_API_KEY` el módulo no se cae: degrada a un banco local de
+preguntas por componente, elegidas al azar, y lo dice en pantalla.
 
 ### Módulo Comunitario (Gemelo Digital + Aprendizaje Federado + Avatar)
 El módulo `comunitario` agrupa tres piezas conceptualmente ligadas:
@@ -168,7 +201,8 @@ Copia `.env.example` como `.env` y completa los valores reales. Nunca subas tu `
 | DATABASE_URL | Sí | URL de conexión a NeonDB (PostgreSQL) | postgresql://user:pass@host/lumys |
 | JWT_SECRET | Sí | Clave secreta para firmar tokens JWT | (cadena larga y aleatoria) |
 | JWT_EXPIRES_IN | No | Tiempo de expiración del token | 7d |
-| IA_API_KEY | Sí | Clave de la API de Claude para el módulo ia | sk-ant-... |
+| ANTHROPIC_API_KEY | No | Clave de la API de Claude. Sin ella el módulo `ia` degrada a su banco local de preguntas en vez de caerse. | sk-ant-... |
+| IA_MODELO | No | Modelo a usar. Por defecto `claude-opus-4-8`. | claude-opus-4-8 |
 | BREVO_API_KEY | Sí | Clave de la API de Brevo para notificaciones | xkeysib-... |
 | BREVO_SENDER_EMAIL | Sí | Correo remitente configurado en Brevo | notificaciones@lumys.app |
 | NODE_ENV | No | Entorno de ejecución | development |
@@ -267,97 +301,59 @@ lumys/
 
 ## Modelo de base de datos
 
+La fuente de verdad es [`prisma/schema.prisma`](prisma/schema.prisma); los cambios
+se versionan en `prisma/migrations/`. Resumen de las entidades:
+
+| Entidad | Rol en el sistema |
+|---|---|
+| `Departamento` / `Municipio` | División territorial de Nicaragua. Catálogo, no texto libre. |
+| `Institucion` | Centro educativo, ubicado en un municipio. |
+| `Usuario` | Persona con `rol` (acceso técnico) y `perfil` (función en el acompañamiento). |
+| `RedDeApoyo` | Vincula a un estudiante con las personas en las que confía. |
+| `CheckIn` | Registro emocional diario del estudiante. |
+| `LineaBase` | Patrón normal del estudiante, para comparar contra sí mismo. |
+| `SenalDetectada` | Desviación sostenida respecto de esa línea base. |
+| `CasoOrientador` | Seguimiento que abre un orientador a partir de una señal. |
+| `ServicioExterno` | Catálogo de servicios a los que se puede derivar. |
+| `Derivacion` | Envío de un caso a un servicio externo. |
+| `SeguimientoDerivacion` | Confirmación de atención en cada hito (7, 30 días…). |
+
+### Decisiones de modelado
+
+**Roles como enums.** `rol` y `perfil` eran `String` libre: un typo dejaba a un
+usuario sin permisos de forma silenciosa. Hoy son enums que Postgres valida.
+
 ```prisma
-model Usuario {
-  id              String   @id @default(uuid())
-  edad            Int?
-  tipoUsuario     String   @map("tipo_usuario")
-  centroId        String?  @map("centro_id")
-  comunidadId     String?  @map("comunidad_id")
-  consentimiento  Boolean
-  fechaRegistro   DateTime @default(now()) @map("fecha_registro")
-
-  registros       RegistroEmocional[]
-  predicciones    PrediccionRiesgo[]
-  alertas         Alerta[]
-  intervenciones  Intervencion[]
-
-  @@map("usuarios")
-}
-
-model RegistroEmocional {
-  id             String   @id @default(uuid())
-  usuarioId      String   @map("usuario_id")
-  usuario        Usuario  @relation(fields: [usuarioId], references: [id])
-  emocion        String
-  nivelEstres    Int      @map("nivel_estres")
-  horasSueno     Decimal  @map("horas_sueno")
-  energia        Int
-  concentracion  Int
-  apoyoSocial    Int      @map("apoyo_social")
-  textoUsuario   String?  @map("texto_usuario")
-  audioUrl       String?  @map("audio_url")
-  fecha          DateTime @default(now())
-
-  @@map("registros_emocionales")
-}
-
-model PrediccionRiesgo {
-  id                    String   @id @default(uuid())
-  usuarioId             String   @map("usuario_id")
-  usuario               Usuario  @relation(fields: [usuarioId], references: [id])
-  puntajeIcve           Decimal  @map("puntaje_icve")
-  nivelRiesgo           String   @map("nivel_riesgo")
-  confianzaModelo       Decimal  @map("confianza_modelo")
-  factoresExplicativos  Json     @map("factores_explicativos")
-  coachIa               String?  @map("coach_ia")
-  fecha                 DateTime @default(now())
-
-  @@map("predicciones_riesgo")
-}
-
-model Alerta {
-  id             String    @id @default(uuid())
-  usuarioId      String    @map("usuario_id")
-  usuario        Usuario   @relation(fields: [usuarioId], references: [id])
-  nivelAlerta    String    @map("nivel_alerta")
-  estado         String
-  responsableId  String?   @map("responsable_id")
-  fechaCreacion  DateTime  @default(now()) @map("fecha_creacion")
-  fechaCierre    DateTime? @map("fecha_cierre")
-
-  @@map("alertas")
-}
-
-model Intervencion {
-  id                String   @id @default(uuid())
-  usuarioId         String   @map("usuario_id")
-  usuario           Usuario  @relation(fields: [usuarioId], references: [id])
-  tipoIntervencion  String   @map("tipo_intervencion")
-  descripcion       String?
-  completada        Boolean  @default(false)
-  efectividad       Decimal?
-  fecha             DateTime @default(now())
-
-  @@map("intervenciones")
-}
-
-model ParametroFederado {
-  id                  String   @id @default(uuid())
-  centroId            String   @map("centro_id")
-  icvePromedio        Decimal  @map("icve_promedio")
-  totalRegistros      Int      @map("total_registros")
-  fechaActualizacion  DateTime @default(now()) @map("fecha_actualizacion")
-
-  @@map("parametros_federados")
-}
+enum Rol    { ADMIN  AUDITOR  USUARIO }
+enum Perfil { ESTUDIANTE  DOCENTE  ORIENTADOR  PSICOLOGO  FAMILIA  COMPANERO }
 ```
+
+Se separan a propósito: `rol` es el nivel de acceso técnico y `perfil` es la
+función dentro del acompañamiento. Un orientador es `USUARIO` + `ORIENTADOR`;
+un administrador no necesita perfil.
+
+**Municipio normalizado.** Antes era un `String?` dentro de `Institucion`, que
+admitía "Managua", "managua" y "Mangua" como lugares distintos e impedía
+agrupar métricas por territorio. Ahora es un catálogo con su departamento.
+
+**Hitos de derivación como filas.** `Derivacion` tenía dos columnas booleanas
+fijas, `confirmacion7dias` y `confirmacion30dias`. Eso obligaba a migrar la
+tabla para añadir cualquier hito nuevo y no permitía saber *cuándo* se
+confirmó. Ahora cada hito es una fila de `SeguimientoDerivacion`, con su fecha.
+El servicio externo pasó de texto libre a `ServicioExterno`, para poder contar
+cuántas derivaciones fueron al mismo lugar.
+
+**Consentimiento persistido.** El formulario lo exigía pero el dato se
+descartaba. En una plataforma de salud mental con menores debe quedar
+registrado, con la fecha en que se otorgó.
 
 ---
 
 ## Endpoints de la API
 
-Base URL: `http://localhost:3000/api/v1`
+Base URL: `http://localhost:5000/api/v1`
+
+Las rutas protegidas esperan el encabezado `Authorization: Bearer <token>`.
 
 ### Auth
 
@@ -365,57 +361,124 @@ Base URL: `http://localhost:3000/api/v1`
 ```json
 // Body
 {
-  "edad": 19,
-  "tipo_usuario": "estudiante",
-  "centro_id": "uuid",
-  "consentimiento": true,
-  "password": "********"
+  "email": "estudiante@centro.edu.ni",
+  "nombre": "Kevin Ortega",
+  "password": "********",
+  "perfil": "ESTUDIANTE",
+  "institucionId": 1,
+  "consentimiento": true
 }
 ```
+`rol` no se acepta desde el cliente: siempre se crea como `USUARIO`. Solo un
+administrador puede cambiarlo, vía `PATCH /usuarios/:id/rol`.
 
-**POST /auth/login** — Autentica y devuelve un JWT.
+**POST /auth/login** — Autentica y devuelve un JWT. Una cuenta con
+`activo: false` recibe 401 aunque la contraseña sea correcta.
 ```json
 // Respuesta 200 OK
 {
   "token": "<jwt>",
-  "usuario": { "id": "uuid", "tipo_usuario": "estudiante" }
+  "usuario": { "id": 8, "email": "...", "rol": "USUARIO", "perfil": "ESTUDIANTE" }
 }
 ```
+
+**GET /auth/me** — Devuelve la sesión del token. El frontend debe armar la
+sesión con esto, no deduciendo el perfil a partir del correo.
+
+### Usuarios y permisos
+
+| Endpoint | Quién puede |
+|---|---|
+| `GET /usuarios` | Solo `ADMIN` y `AUDITOR` |
+| `GET /usuarios/estudiantes` | Cualquier sesión, pero **cada quien recibe una lista distinta** |
+| `GET /usuarios/:id/checkins` | Solo si el solicitante tiene acceso a ese estudiante |
+| `PATCH /usuarios/:id/rol` | Solo `ADMIN` (no sobre sí mismo) |
+| `PATCH /usuarios/:id/estado` | Solo `ADMIN` (no sobre sí mismo) |
+
+La visibilidad se resuelve en `alcanceDeEstudiantes()`
+([src/middlewares/permisos.middlewares.js](src/middlewares/permisos.middlewares.js)),
+que devuelve un filtro Prisma para que la consulta nazca ya acotada en vez de
+traer todo y filtrar después:
+
+- `ADMIN` / `AUDITOR` → toda la plataforma.
+- `ORIENTADOR` / `PSICOLOGO` → los estudiantes de su propia institución.
+- `FAMILIA` / `COMPANERO` → solo quien los incluyó en su red de apoyo.
+- `ESTUDIANTE` → únicamente sus propios datos.
 
 ### Registros emocionales
 
 **GET /registros** — Historial de registros del usuario autenticado (alimenta la Huella Emocional).
 
-**POST /registros** — Crea un registro y dispara el recálculo del ICVE.
+**POST /registros** — Cierra el check-in: guarda, calcula el ICVE, analiza y
+evalúa si abre una señal. Los `turnos` son los intercambios que devolvió
+`/ia/checkin/turno` con la respuesta que dio el estudiante.
 ```json
 // Body
 {
-  "emocion": "ansiedad",
-  "nivel_estres": 7,
-  "horas_sueno": 5.5,
-  "energia": 4,
-  "concentracion": 5,
-  "apoyo_social": 6,
+  "turnos": [
+    { "pregunta": "¿Anoche te dormiste de una o le diste vueltas?",
+      "respuesta": "👀 Casi nada", "componente": "sueno", "valor": 1 },
+    { "pregunta": "¿Con quién hablaste ayer que no fuera por obligación?",
+      "respuesta": "🎧 Con nadie", "componente": "vinculo", "valor": 2 }
+  ],
   "texto_usuario": "Esta semana me ha costado dormir.",
-  "audio_url": null
+  "voz": null
+}
+```
+`componente` es uno de `animo`, `sueno`, `energia`, `vinculo`,
+`concentracion` o `libre`. Un componente sin responder se excluye del ICVE y los
+pesos se renormalizan sobre los presentes: inventar un valor neutro donde no
+hubo respuesta ensucia la serie con la que se compara al estudiante.
+
+```json
+// Respuesta 201 Created
+{
+  "icve": 72, "delta": 18, "linea_base": 54,
+  "coach": "Dos noches cortas seguidas. Probá acostarte media hora antes hoy.",
+  "factores": [
+    { "factor": "Sueño más corto", "evidencia": "Reporta haber dormido poco dos días seguidos.", "direccion": "tensiona" }
+  ],
+  "explicacion": "El sueño corto viene junto con menos contacto con otros.",
+  "sentimiento": "negativo", "confianza": 0.74,
+  "acompanamiento": true,
+  "contencion": null
 }
 ```
 
 ### Análisis de IA
 
-**POST /ia/analizar-texto** — Analiza texto y devuelve sentimiento, factores explicativos y Coach IA.
+**POST /ia/checkin/turno** — Devuelve el siguiente intercambio del check-in.
+Se manda la sesión completa en cada llamada: el backend no guarda estado
+conversacional, así que el endpoint es idempotente por turno y recargar la
+página no deja un check-in a medias en la base.
 ```json
+// Body
+{ "sesion": [ { "pregunta": "…", "respuesta": "…", "componente": "animo", "valor": 4 } ] }
+
 // Respuesta 200 OK
 {
-  "sentimiento": "negativo",
-  "confianza_modelo": 0.84,
-  "factores_principales": ["Disminución del sueño", "Percepción de aislamiento social"],
-  "explicacion": "El texto muestra señales de fatiga y desconexión del entorno social.",
-  "coach_ia": "Notamos que has dormido menos esta semana. Intenta acostarte 30 minutos antes hoy."
+  "reaccion": "Anotado, dos noches cortas seguidas se sienten.",
+  "pregunta": "¿Con quién hablaste ayer que no fuera por obligación?",
+  "componente": "vinculo",
+  "formato": "opciones",
+  "opciones": [
+    { "etiqueta": "Con varios", "emoji": "👥", "valor": 5 },
+    { "etiqueta": "Con nadie",  "emoji": "🎧", "valor": 2 }
+  ],
+  "cierre": false, "turno": 3, "racha": 12, "generado": true
 }
 ```
+`generado: false` significa que la IA no estaba disponible y la pregunta vino
+del banco local. El frontend lo muestra: que el estudiante sepa cuándo hay un
+modelo detrás y cuándo no es parte de lo que la plataforma le promete.
 
-**POST /ia/analizar-voz** — Analiza un audio opcional (requiere consentimiento explícito).
+**GET /ia/estado** — Si el módulo tiene clave configurada y con qué modelo.
+
+**POST /ia/analizar-texto** — Analiza un texto suelto, fuera del check-in.
+
+**POST /ia/analizar-voz** — Analiza características prosódicas ya extraídas en
+el cliente (`{ "caracteristicas": {...}, "consentimiento": true }`). No recibe
+audio ni transcripción, y `consentimiento` no tiene valor por defecto.
 
 ### Alertas
 

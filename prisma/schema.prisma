@@ -9,97 +9,230 @@ datasource db {
   provider = "postgresql"
 }
 
-model CasoOrientador {
-  id               Int            @id @default(autoincrement())
-  senalId          Int            @unique
-  orientadorId     Int
-  estado           String         @default("abierto")
-  planSeguridad    String?
-  accionRegistrada String?
-  fechaCierre      DateTime?
-  creadoEn         DateTime       @default(now())
-  Usuario          Usuario        @relation(fields: [orientadorId], references: [id])
-  SenalDetectada   SenalDetectada @relation(fields: [senalId], references: [id])
-  Derivacion       Derivacion[]
+// ---------------------------------------------------------------------------
+// Roles y catálogos
+//
+// `Rol` es el nivel de acceso técnico y `Perfil` es la función dentro del
+// acompañamiento. Estaban como String libre: un typo bastaba para dejar a un
+// usuario sin permisos de forma silenciosa.
+// ---------------------------------------------------------------------------
+
+enum Rol {
+  ADMIN
+  AUDITOR
+  USUARIO
 }
 
-model CheckIn {
-  id             Int      @id @default(autoincrement())
-  estudianteId   Int
-  fecha          DateTime @default(now())
-  respuestasJson String
-  textoLibre     String?
-  resumenIa      String?
-  icvePuntaje    Int?
-  Usuario        Usuario  @relation(fields: [estudianteId], references: [id])
+enum Perfil {
+  ESTUDIANTE
+  DOCENTE
+  ORIENTADOR
+  PSICOLOGO
+  FAMILIA
+  COMPANERO
 }
 
-model Derivacion {
-  id                 Int            @id @default(autoincrement())
-  casoId             Int
-  servicioExterno    String
-  fecha              DateTime       @default(now())
-  confirmacion7dias  Boolean        @default(false)
-  confirmacion30dias Boolean        @default(false)
-  CasoOrientador     CasoOrientador @relation(fields: [casoId], references: [id])
+enum EstadoCaso {
+  ABIERTO
+  SEGUIMIENTO
+  DERIVADO
+  CERRADO
+}
+
+enum EstadoDerivacion {
+  PENDIENTE
+  ACEPTADA
+  ATENDIDA
+  RECHAZADA
+}
+
+enum TipoServicio {
+  SALUD_MENTAL
+  SALUD_PUBLICA
+  PROTECCION_INFANCIA
+  LINEA_CRISIS
+}
+
+// ---------------------------------------------------------------------------
+// División territorial
+//
+// Antes el municipio era un String? suelto dentro de Institucion, lo que
+// permitía "Managua", "managua" y "Mangua" como si fueran lugares distintos e
+// impedía agrupar por territorio. Ahora es un catálogo con su departamento.
+// ---------------------------------------------------------------------------
+
+model Departamento {
+  id         Int         @id @default(autoincrement())
+  nombre     String      @unique
+  municipios Municipio[]
+}
+
+model Municipio {
+  id             Int               @id @default(autoincrement())
+  nombre         String
+  departamentoId Int
+  departamento   Departamento      @relation(fields: [departamentoId], references: [id])
+  instituciones  Institucion[]
+  servicios      ServicioExterno[]
+
+  @@unique([nombre, departamentoId])
 }
 
 model Institucion {
-  id        Int       @id @default(autoincrement())
-  nombre    String
-  municipio String?
-  creadoEn  DateTime  @default(now())
-  Usuario   Usuario[]
+  id          Int        @id @default(autoincrement())
+  nombre      String
+  municipioId Int?
+  municipio   Municipio? @relation(fields: [municipioId], references: [id])
+  creadoEn    DateTime   @default(now())
+  usuarios    Usuario[]
+}
+
+// ---------------------------------------------------------------------------
+// Personas
+// ---------------------------------------------------------------------------
+
+model Usuario {
+  id            Int         @id @default(autoincrement())
+  nombre        String
+  email         String      @unique
+  passwordHash  String
+  rol           Rol         @default(USUARIO)
+  perfil        Perfil?
+  institucionId Int?
+  institucion   Institucion? @relation(fields: [institucionId], references: [id])
+  creadoEn      DateTime    @default(now())
+  activo        Boolean     @default(true)
+
+  // El consentimiento se exigía en el formulario pero no se guardaba en ningún
+  // lado. En una plataforma de salud mental con menores tiene que quedar
+  // registrado, y con la fecha en que se otorgó.
+  consentimiento      Boolean   @default(false)
+  fechaConsentimiento DateTime?
+
+  checkIns        CheckIn[]
+  lineaBase       LineaBase?
+  senales         SenalDetectada[]
+  casosAsignados  CasoOrientador[]
+  redDeApoyo      RedDeApoyo[]     @relation("RedDeApoyoDelEstudiante")
+  esApoyoDe       RedDeApoyo[]     @relation("PersonaDeApoyo")
+}
+
+model RedDeApoyo {
+  id               Int      @id @default(autoincrement())
+  estudianteId     Int
+  personaApoyoId   Int
+  orden            Int      @default(1)
+  excluidoDeAlerta Boolean  @default(false)
+  creadoEn         DateTime @default(now())
+
+  estudiante   Usuario @relation("RedDeApoyoDelEstudiante", fields: [estudianteId], references: [id])
+  personaApoyo Usuario @relation("PersonaDeApoyo", fields: [personaApoyoId], references: [id])
+
+  @@unique([estudianteId, personaApoyoId])
+}
+
+// ---------------------------------------------------------------------------
+// Seguimiento emocional
+// ---------------------------------------------------------------------------
+
+model CheckIn {
+  id           Int      @id @default(autoincrement())
+  estudianteId Int
+  fecha        DateTime @default(now())
+  respuestas   Json
+  textoLibre   String?
+  resumenIa    String?
+  puntajeIcve  Int?
+
+  estudiante Usuario @relation(fields: [estudianteId], references: [id])
+
+  @@index([estudianteId, fecha])
 }
 
 model LineaBase {
   id                Int      @id @default(autoincrement())
   estudianteId      Int      @unique
   promedioIcveMovil Float?
-  patronNormalJson  String?
+  patronNormal      Json?
   actualizadoEn     DateTime
-  Usuario           Usuario  @relation(fields: [estudianteId], references: [id])
-}
 
-model RedDeApoyo {
-  id                                       Int      @id @default(autoincrement())
-  estudianteId                             Int
-  contactoId                               Int
-  orden                                    Int      @default(1)
-  excluidoDeAlerta                         Boolean  @default(false)
-  creadoEn                                 DateTime @default(now())
-  Usuario_RedDeApoyo_contactoIdToUsuario   Usuario  @relation("RedDeApoyo_contactoIdToUsuario", fields: [contactoId], references: [id])
-  Usuario_RedDeApoyo_estudianteIdToUsuario Usuario  @relation("RedDeApoyo_estudianteIdToUsuario", fields: [estudianteId], references: [id])
+  estudiante Usuario @relation(fields: [estudianteId], references: [id])
 }
 
 model SenalDetectada {
-  id                      Int             @id @default(autoincrement())
+  id                      Int      @id @default(autoincrement())
   estudianteId            Int
   deltaIcve               Float?
-  componentePatronJson    String?
-  lenguajeRiesgoExplicito Boolean         @default(false)
-  semanasSostenidas       Int             @default(0)
+  componentePatron        Json?
+  lenguajeRiesgoExplicito Boolean  @default(false)
+  semanasSostenidas       Int      @default(0)
   nivelRespuesta          Int
-  creadoEn                DateTime        @default(now())
-  CasoOrientador          CasoOrientador?
-  Usuario                 Usuario         @relation(fields: [estudianteId], references: [id])
+  creadoEn                DateTime @default(now())
+
+  estudiante Usuario         @relation(fields: [estudianteId], references: [id])
+  caso       CasoOrientador?
+
+  @@index([estudianteId, creadoEn])
 }
 
-model Usuario {
-  id                                          Int              @id @default(autoincrement())
-  nombre                                      String
-  contacto                                    String           @unique
-  passwordHash                                String
-  rol                                         String           @default("USUARIO")
-  perfil                                      String?
-  institucionId                               Int?
-  creadoEn                                    DateTime         @default(now())
-  activo                                      Boolean          @default(true)
-  CasoOrientador                              CasoOrientador[]
-  CheckIn                                     CheckIn[]
-  LineaBase                                   LineaBase?
-  RedDeApoyo_RedDeApoyo_contactoIdToUsuario   RedDeApoyo[]     @relation("RedDeApoyo_contactoIdToUsuario")
-  RedDeApoyo_RedDeApoyo_estudianteIdToUsuario RedDeApoyo[]     @relation("RedDeApoyo_estudianteIdToUsuario")
-  SenalDetectada                              SenalDetectada[]
-  Institucion                                 Institucion?     @relation(fields: [institucionId], references: [id])
+// ---------------------------------------------------------------------------
+// Casos y derivaciones
+//
+// `Derivacion` tenía dos columnas booleanas fijas (confirmacion7dias y
+// confirmacion30dias): cada hito nuevo exigía una migración, no se podía saber
+// CUÁNDO se confirmó, y el servicio externo era texto libre irrepetible entre
+// derivaciones. Ahora los hitos son filas y el servicio es un catálogo.
+// ---------------------------------------------------------------------------
+
+model CasoOrientador {
+  id               Int        @id @default(autoincrement())
+  senalId          Int        @unique
+  orientadorId     Int
+  estado           EstadoCaso @default(ABIERTO)
+  planSeguridad    String?
+  accionRegistrada String?
+  fechaCierre      DateTime?
+  creadoEn         DateTime   @default(now())
+
+  orientador   Usuario        @relation(fields: [orientadorId], references: [id])
+  senal        SenalDetectada @relation(fields: [senalId], references: [id])
+  derivaciones Derivacion[]
+}
+
+model ServicioExterno {
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  tipo        TipoServicio
+  telefono    String?
+  municipioId Int?
+  activo      Boolean      @default(true)
+
+  municipio    Municipio?   @relation(fields: [municipioId], references: [id])
+  derivaciones Derivacion[]
+}
+
+model Derivacion {
+  id                Int              @id @default(autoincrement())
+  casoId            Int
+  servicioExternoId Int
+  estado            EstadoDerivacion @default(PENDIENTE)
+  motivo            String?
+  fecha             DateTime         @default(now())
+
+  caso            CasoOrientador          @relation(fields: [casoId], references: [id])
+  servicioExterno ServicioExterno         @relation(fields: [servicioExternoId], references: [id])
+  seguimientos    SeguimientoDerivacion[]
+}
+
+model SeguimientoDerivacion {
+  id                Int       @id @default(autoincrement())
+  derivacionId      Int
+  diasHito          Int
+  confirmado        Boolean   @default(false)
+  fechaConfirmacion DateTime?
+  observacion       String?
+
+  derivacion Derivacion @relation(fields: [derivacionId], references: [id], onDelete: Cascade)
+
+  @@unique([derivacionId, diasHito])
 }

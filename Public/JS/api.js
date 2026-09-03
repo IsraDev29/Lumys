@@ -52,6 +52,23 @@ const API = (() => {
     }
   }
 
+  /**
+   * Igual que `conRespaldo`, pero cae al respaldo pase lo que pase — incluido
+   * un 401 por sesión de demostración.
+   *
+   * Solo para el check-in. Es el único flujo donde propagar el error significa
+   * dejar al estudiante con una conversación cortada a la mitad, y eso pesa
+   * más que mostrarle el mensaje de error exacto.
+   */
+  async function conRespaldoSiempre(promesa, respaldo) {
+    try {
+      return await promesa();
+    } catch (err) {
+      console.warn('[API] check-in en modo local:', err.status || err.message);
+      return respaldo();
+    }
+  }
+
   /* ========================================================================
      Datos de demostración — un solo colegio, Fase 2 del roadmap
      ======================================================================== */
@@ -229,6 +246,68 @@ const API = (() => {
   };
 
   /* ========================================================================
+     Respaldo del check-in conversacional
+
+     Solo se usa cuando el backend no responde. No es el guion fijo de antes:
+     es un banco por componente del que se elige al azar, así que dos sesiones
+     seguidas no traen las mismas preguntas. Peor que el modelo, pero no se
+     siente un formulario.
+     ======================================================================== */
+
+  const BANCO_LOCAL = {
+    animo: [
+      { pregunta: '¿Qué fue lo último que te hizo reír, aunque haya sido una tontera?',
+        opciones: [{ emoji: '😄', etiqueta: 'Algo bueno', valor: 5 }, { emoji: '🙃', etiqueta: 'Nada hoy', valor: 2 }, { emoji: '🤔', etiqueta: 'No me acuerdo', valor: 3 }] },
+      { pregunta: 'Si ayer hubiera sido una canción, ¿iba rápida o lenta?',
+        opciones: [{ emoji: '⚡', etiqueta: 'Rápida', valor: 4 }, { emoji: '🎧', etiqueta: 'Tranquila', valor: 4 }, { emoji: '🐢', etiqueta: 'Lenta', valor: 2 }] },
+    ],
+    sueno: [
+      { pregunta: '¿Anoche te dormiste de una o le diste vueltas al asunto?',
+        opciones: [{ emoji: '😴', etiqueta: 'De una', valor: 5 }, { emoji: '🌙', etiqueta: 'Me costó', valor: 3 }, { emoji: '👀', etiqueta: 'Casi nada', valor: 1 }] },
+      { pregunta: 'Cuando sonó la alarma hoy, ¿te levantaste o le diste posponer?',
+        opciones: [{ emoji: '☀️', etiqueta: 'Me levanté', valor: 5 }, { emoji: '⏰', etiqueta: 'Un ratito más', valor: 3 }, { emoji: '🛏️', etiqueta: 'No quería', valor: 2 }] },
+    ],
+    energia: [
+      { pregunta: 'Del 1 al 5, ¿cuánta batería traés hoy comparado con tu semana normal?', formato: 'escala' },
+    ],
+    vinculo: [
+      { pregunta: '¿Con quién hablaste ayer que no fuera por obligación?',
+        opciones: [{ emoji: '👥', etiqueta: 'Con varios', valor: 5 }, { emoji: '🙋', etiqueta: 'Con uno', valor: 4 }, { emoji: '🎧', etiqueta: 'Con nadie', valor: 2 }] },
+      { pregunta: 'En el recreo de ayer, ¿andabas acompañado o en lo tuyo?',
+        opciones: [{ emoji: '👥', etiqueta: 'Acompañado', valor: 5 }, { emoji: '🔀', etiqueta: 'Un poco de cada', valor: 4 }, { emoji: '🎧', etiqueta: 'En lo mío', valor: 2 }] },
+    ],
+    concentracion: [
+      { pregunta: 'En clase ayer, ¿se te fue la cabeza a otro lado?',
+        opciones: [{ emoji: '🎯', etiqueta: 'Estuve atento', valor: 5 }, { emoji: '🌫️', etiqueta: 'A ratos', valor: 3 }, { emoji: '🛰️', etiqueta: 'Todo el rato', valor: 1 }] },
+    ],
+    libre: [
+      { pregunta: '¿Querés contarme algo más? Escribí lo que sea — o saltá esta parte.', formato: 'texto' },
+    ],
+  };
+
+  const COMPONENTES_LOCAL = ['animo', 'sueno', 'energia', 'vinculo', 'concentracion'];
+  const REACCIONES_LOCAL = ['Anotado.', 'Vale, gracias por decirlo.', 'Listo, lo guardo.', 'Ok, me sirve saberlo.'];
+  const alAzar = (lista) => lista[Math.floor(Math.random() * lista.length)];
+
+  function turnoLocal(sesion) {
+    const cubiertos = sesion.map((t) => t.componente);
+    const pendientes = COMPONENTES_LOCAL.filter((c) => !cubiertos.includes(c));
+    const componente = pendientes.length ? pendientes[0] : 'libre';
+    const elegido = alAzar(BANCO_LOCAL[componente]);
+
+    return {
+      reaccion: sesion.length === 0 ? '' : alAzar(REACCIONES_LOCAL),
+      pregunta: elegido.pregunta,
+      componente,
+      formato: elegido.formato || 'opciones',
+      opciones: elegido.opciones || [],
+      cierre: componente === 'libre',
+      generado: false,
+      turno: sesion.length + 1,
+    };
+  }
+
+  /* ========================================================================
      Endpoints
      ======================================================================== */
 
@@ -266,15 +345,34 @@ const API = (() => {
     institucional: () => Promise.resolve(DEMO.institucional),
     comunitario: () => conRespaldo(() => request('/comunitario/radar'), () => DEMO.comunitario),
 
-    /** Guarda el check-in. La IA analiza el texto solo si hay servidor. */
+    /**
+     * Pide el siguiente intercambio del check-in.
+     *
+     * Se manda la sesión completa en cada llamada: el backend no guarda estado
+     * conversacional, así que este endpoint es idempotente por turno y
+     * recargar la página no deja un check-in a medias en la base.
+     */
+    async turnoCheckin(sesion) {
+      return conRespaldoSiempre(
+        () => request('/ia/checkin/turno', { metodo: 'POST', cuerpo: { sesion } }),
+        () => turnoLocal(sesion),
+      );
+    },
+
+    /** Cierra el check-in. El ICVE y el análisis se calculan en el servidor. */
     async enviarCheckin(payload) {
-      return conRespaldo(
+      return conRespaldoSiempre(
         () => request('/registros', { metodo: 'POST', cuerpo: payload }),
         () => {
           const historial = LM.store.get('checkins', []);
           historial.unshift({ ...payload, fecha: new Date().toISOString() });
           LM.store.set('checkins', historial.slice(0, 60));
-          return { ok: true, demo: true, guardado: historial.length };
+          return {
+            demo: true,
+            coach: 'Gracias por aparecer hoy. Queda guardado.',
+            factores: [],
+            contencion: null,
+          };
         },
       );
     },

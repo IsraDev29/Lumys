@@ -28,4 +28,19 @@ async function login(req, res, next){
     }
 }
 
-module.exports = {register, login};
+/** Devuelve la sesión actual a partir del token, sin que el cliente la invente. */
+async function yo(req, res, next){
+    try{
+        const usuario = await authService.obtenerUsuario(req.usuario.id);
+
+        if(!usuario){
+            return res.status(404).json({error: 'Usuario no encontrado'});
+        }
+
+        res.status(200).json(usuario);
+    }catch(error){
+        next(error);
+    }
+}
+
+module.exports = {register, login, yo};
