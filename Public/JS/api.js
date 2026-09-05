@@ -359,22 +359,48 @@ const API = (() => {
       );
     },
 
-    /** Cierra el check-in. El ICVE y el análisis se calculan en el servidor. */
+    /**
+     * Cierra el check-in. El ICVE y el análisis se calculan en el servidor.
+     *
+     * Si el envío falla por falta de red, el registro NO se pierde: se encola en
+     * IndexedDB y se manda solo cuando vuelve la señal. Es el flujo que
+     * justifica toda la parte offline de la app — un estudiante que completó su
+     * check-in en el recreo, donde el colegio no tiene señal, ya hizo su parte.
+     *
+     * Se distingue el motivo del fallo. Un 4xx es el servidor rechazando lo que
+     * mandamos: reintentarlo daría el mismo error para siempre, así que no se
+     * encola. Un fallo de red o un 5xx sí se reintenta.
+     */
     async enviarCheckin(payload) {
-      return conRespaldoSiempre(
-        () => request('/registros', { metodo: 'POST', cuerpo: payload }),
-        () => {
-          const historial = LM.store.get('checkins', []);
-          historial.unshift({ ...payload, fecha: new Date().toISOString() });
-          LM.store.set('checkins', historial.slice(0, 60));
+      try {
+        return await request('/registros', { metodo: 'POST', cuerpo: payload });
+      } catch (err) {
+        const esDeNegocio = ERRORES_REALES.includes(err.status);
+
+        // El historial local se actualiza siempre, para que la Huella Emocional
+        // muestre el registro de hoy sin esperar a la sincronización.
+        const historial = LM.store.get('checkins', []);
+        historial.unshift({ ...payload, fecha: new Date().toISOString() });
+        LM.store.set('checkins', historial.slice(0, 60));
+
+        if (!esDeNegocio && window.PWA) {
+          await PWA.guardarParaDespues('/api/v1/registros', payload, token.get());
           return {
-            demo: true,
-            coach: 'Gracias por aparecer hoy. Queda guardado.',
+            pendiente: true,
+            coach: 'Gracias por aparecer hoy. Lo guardé en tu teléfono y se envía solo cuando vuelva la señal.',
             factores: [],
             contencion: null,
           };
-        },
-      );
+        }
+
+        console.warn('[API] check-in en modo local:', err.status || err.message);
+        return {
+          demo: true,
+          coach: 'Gracias por aparecer hoy. Queda guardado.',
+          factores: [],
+          contencion: null,
+        };
+      }
     },
   };
 })();

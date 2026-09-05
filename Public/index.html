@@ -9,7 +9,15 @@
   <title>Lumys* · Conecta · Comprende · Crece</title>
 
   <link rel="icon" href="img/lumys-app-icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="img/lumys-app-icon.svg">
+  <!-- iOS ignora el manifest para el icono y no renderiza SVG acá: necesita PNG. -->
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+  <!-- PWA: instalable desde el navegador y utilizable sin conexión. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumys*">
 
   <!-- Tipografía de marca: Quicksand (títulos) + Work Sans (cuerpo) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -151,6 +159,10 @@
 
   <!-- Base y shell primero: los controladores se registran en App.controladores -->
   <script src="JS/utils.js"></script>
+  <!-- pwa.js antes que api.js: la cola offline tiene que existir cuando el
+       cliente de la API intente encolar un check-in que no pudo enviar. -->
+  <script src="JS/pwa.js"></script>
+  <script src="JS/voz.js"></script>
   <script src="JS/api.js"></script>
   <script src="JS/app.js"></script>
 

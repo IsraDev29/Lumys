@@ -33,6 +33,10 @@ App.controladores.checkin = (raiz) => {
   let sesion = [];
   let textoLibre = null;
   let cerrado = false;
+
+  // Características prosódicas de la nota de voz, si el estudiante grabó una.
+  // Nunca el audio: ver JS/voz.js.
+  let caracteristicasVoz = null;
   // La racha llega con cada turno, calculada en el servidor sobre los check-ins
   // guardados. No se cuenta acá para que no dependa del reloj del teléfono.
   let racha = 0;
@@ -135,13 +139,7 @@ App.controladores.checkin = (raiz) => {
       el('div', { class: 'lm-chat__composer' }, [
         el('button', {
           class: 'lm-chat__voice', type: 'button', 'aria-label': 'Grabar nota de voz',
-          onclick: (e) => {
-            const btn = e.currentTarget;
-            btn.classList.toggle('is-recording');
-            LM.toast(btn.classList.contains('is-recording')
-              ? 'Grabando… (el análisis de voz llega en la Fase 3)'
-              : 'Nota de voz descartada.', { tipo: 'info' });
-          },
+          onclick: (e) => alternarGrabacion(e.currentTarget),
         }, [el('i', { class: 'bi bi-mic' })]),
         area,
         el('button', { class: 'lm-chat__send', type: 'button', 'aria-label': 'Enviar', onclick: enviar },
@@ -153,6 +151,48 @@ App.controladores.checkin = (raiz) => {
       }, ['Saltar esta parte']),
     );
     area.focus();
+  }
+
+  /* --- Nota de voz ---------------------------------------------------------- */
+
+  /**
+   * Graba y para, como el botón de audio de cualquier app de mensajería.
+   *
+   * Lo que se guarda al soltar son seis números — duración, pausas, variación de
+   * tono, ritmo, energía —, nunca el audio. Se le dice al estudiante de forma
+   * explícita: es lo que hace que apretar el micrófono no sea una decisión a
+   * ciegas sobre sus propios datos.
+   */
+  async function alternarGrabacion(boton) {
+    if (!Voz.soportado()) {
+      LM.toast('Este navegador no permite grabar notas de voz.', { tipo: 'info' });
+      return;
+    }
+
+    if (Voz.grabando()) {
+      boton.classList.remove('is-recording');
+
+      caracteristicasVoz = Voz.detener();
+
+      LM.toast(
+        caracteristicasVoz
+          ? 'Listo. Solo guardé el ritmo de tu voz, no el audio.'
+          : 'Muy corto, no alcancé a escuchar. Probá de nuevo.',
+        { tipo: caracteristicasVoz ? 'ok' : 'info' },
+      );
+      return;
+    }
+
+    try {
+      await Voz.grabar();
+      boton.classList.add('is-recording');
+      LM.toast('Te escucho. El audio no sale de tu teléfono.', { tipo: 'info' });
+    } catch (error) {
+      // El caso normal acá es que el estudiante haya dicho que no al permiso del
+      // micrófono. No es un error que haya que arreglar: es una respuesta.
+      boton.classList.remove('is-recording');
+      LM.toast('No se pudo usar el micrófono. Podés escribir igual.', { tipo: 'info' });
+    }
   }
 
   /* --- Flujo ---------------------------------------------------------------- */
@@ -223,6 +263,10 @@ App.controladores.checkin = (raiz) => {
       resultado = await API.enviarCheckin({
         turnos: sesion,
         texto_usuario: textoLibre,
+        // Solo se manda si el estudiante grabó algo. Son números, nunca audio:
+        // el consentimiento va explícito porque el backend lo exige y rechaza
+        // el análisis sin él. Ver JS/voz.js y src/IA/ia.voz.service.js.
+        voz: caracteristicasVoz ? { caracteristicas: caracteristicasVoz, consentimiento: true } : null,
       });
     } finally {
       puntos.remove();

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumy — banco de emociones</title>
+<link rel="stylesheet" href="CSS/variables.css">
+<link rel="stylesheet" href="CSS/base.css">
+<link rel="stylesheet" href="CSS/lumy.css">
+<style>
+  body { background: var(--lm-cream); padding: 2rem 1.5rem 5rem; }
+  .lab { max-width: 1180px; margin: 0 auto; }
+  .lab h1 { font-family: var(--lm-font-display); color: var(--lm-emerald); margin-bottom: .25rem; }
+  .lab__sub { color: var(--lm-ink-soft); margin-bottom: 2rem; max-width: 62ch; }
+
+  .lab__barra {
+    display: flex; flex-wrap: wrap; gap: .75rem; align-items: center;
+    padding: .85rem 1rem; margin-bottom: 2rem;
+    background: var(--lm-cream-soft); border: 1px solid var(--lm-line); border-radius: 14px;
+    position: sticky; top: 0; z-index: 5;
+  }
+  .lab__barra button {
+    font: 600 .85rem var(--lm-font-body); padding: .45rem .9rem; cursor: pointer;
+    border: 1px solid var(--lm-line-strong); border-radius: 999px; background: #fff;
+    color: var(--lm-ink);
+  }
+  .lab__barra button[aria-pressed="true"] { background: var(--lm-emerald); color: var(--lm-cream); border-color: var(--lm-emerald); }
+
+  /* Escenario grande */
+  .escena {
+    display: grid; grid-template-columns: 300px 1fr; gap: 2rem; align-items: center;
+    padding: 1.5rem; margin-bottom: 2.5rem;
+    background: var(--lm-cream-soft); border: 1px solid var(--lm-line); border-radius: 20px;
+  }
+  .escena__lumy { width: 260px; }
+  .escena__nombre { font: 700 1.6rem var(--lm-font-display); color: var(--lm-emerald); margin: 0 0 .35rem; }
+  .escena__meta { font-size: .8rem; color: var(--lm-ink-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; }
+  .escena__pista { font-size: 1.05rem; color: var(--lm-ink-soft); margin: 0 0 1rem; }
+  .escena__canales { font: .74rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--lm-ink-muted); }
+  .escena__canales b { color: var(--lm-teal); font-weight: 600; }
+
+  /* Prueba de fidelidad */
+  .fidelidad { display: flex; gap: 2.5rem; align-items: flex-end; flex-wrap: wrap;
+    padding: 1.25rem 1.5rem; margin-bottom: 2.5rem;
+    border: 1px dashed var(--lm-line-strong); border-radius: 16px; }
+  .fidelidad figure { margin: 0; width: 150px; text-align: center; }
+  .fidelidad figcaption { font-size: .74rem; color: var(--lm-ink-muted); margin-top: .5rem; }
+  .fidelidad p { flex: 1 1 260px; font-size: .88rem; color: var(--lm-ink-soft); margin: 0; min-width: 240px; }
+
+  /* Rejilla */
+  .familia { margin-bottom: 2.25rem; }
+  .familia__cab { display: flex; align-items: baseline; gap: .75rem; margin-bottom: .9rem;
+    border-bottom: 1px solid var(--lm-line); padding-bottom: .4rem; }
+  .familia__cab h2 { font: 700 1.05rem var(--lm-font-display); color: var(--lm-emerald); margin: 0; }
+  .familia__cab span { font-size: .74rem; color: var(--lm-ink-muted); text-transform: uppercase; letter-spacing: .07em; }
+
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+  .celda { background: var(--lm-cream-soft); border: 1px solid var(--lm-line); border-radius: 16px;
+    padding: .9rem .6rem .7rem; text-align: center; cursor: pointer; position: relative;
+    transition: transform .16s ease, border-color .16s ease; }
+  .celda:hover { transform: translateY(-3px); border-color: var(--lm-teal-300); }
+  .celda[aria-pressed="true"] { border-color: var(--lm-emerald); box-shadow: 0 0 0 2px var(--lm-emerald-100); }
+  .celda .lumy-caja { width: 96px; margin: 0 auto; }
+  .celda__n { font: 600 .88rem var(--lm-font-body); color: var(--lm-ink); margin-top: .35rem; }
+  .celda__i { font-size: .7rem; color: var(--lm-ink-muted); }
+  .celda__banda { position: absolute; top: .5rem; right: .5rem; width: 8px; height: 8px; border-radius: 50%; }
+  .celda__banda--apoyo  { background: var(--lm-clima-despejado); }
+  .celda__banda--espejo { background: var(--lm-terracotta); }
+
+  .leyenda { display: flex; gap: 1.5rem; font-size: .78rem; color: var(--lm-ink-soft); margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .leyenda i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .35rem; }
+</style>
+</head>
+<body>
+<div class="lab">
+
+  <h1>Lumy — banco de emociones</h1>
+  <p class="lab__sub">
+    33 estados sobre la misma geometría. Ninguna pose reemplaza un trazo del SVG
+    original: todas lo deforman. Tocá cualquier celda para verla en grande.
+  </p>
+
+  <div class="lab__barra">
+    <button id="btn-reposo" aria-pressed="true">Ritmo de reposo</button>
+    <button id="btn-parpadeo">Parpadear todos</button>
+    <button id="btn-recorrer" aria-pressed="false">Recorrer</button>
+    <span style="margin-left:auto; font-size:.78rem; color:var(--lm-ink-muted)" id="conteo"></span>
+  </div>
+
+  <!-- Prueba de fidelidad: el rig en reposo contra el archivo original -->
+  <section class="fidelidad">
+    <figure>
+      <img src="img/lumys-mascota.svg" alt="" style="width:150px; display:block">
+      <figcaption>lumys-mascota.svg<br>(archivo original)</figcaption>
+    </figure>
+    <figure>
+      <div id="fid-rig" style="width:150px"></div>
+      <figcaption>rig en <code>neutral</code><br>(sin ritmo)</figcaption>
+    </figure>
+    <p>
+      <strong>Prueba de fidelidad.</strong> A la izquierda el archivo que ya está en
+      producción; a la derecha el rig con la pose <code>neutral</code> y el bucle de
+      reposo apagado. Tienen que ser indistinguibles: mismos paths, mismos radios,
+      mismo gradiente. Si difieren, el rig alteró la geometría en vez de deformarla.
+    </p>
+  </section>
+
+  <div class="escena">
+    <div class="escena__lumy" id="escena-lumy"></div>
+    <div>
+      <p class="escena__meta" id="escena-meta"></p>
+      <h2 class="escena__nombre" id="escena-nombre"></h2>
+      <p class="escena__pista" id="escena-pista"></p>
+      <div class="escena__canales" id="escena-canales"></div>
+    </div>
+  </div>
+
+  <div class="leyenda">
+    <span><i class="celda__banda--apoyo" style="background:var(--lm-clima-despejado)"></i>
+      <strong>apoyo</strong> — Lumy la adopta sola</span>
+    <span><i class="celda__banda--espejo" style="background:var(--lm-terracotta)"></i>
+      <strong>espejo</strong> — solo cuando el estudiante nombra lo suyo</span>
+  </div>
+
+  <div id="familias"></div>
+</div>
+
+<script src="JS/lumy-emociones.js"></script>
+<script src="JS/lumy-nucleo.js"></script>
+<script src="JS/lumy.js"></script>
+<script>
+(function () {
+  const E = LumyEmociones;
+  const celdas = [];
+  let seleccion = 'neutral';
+
+  /* --- Prueba de fidelidad: neutral, congelado ------------------------- */
+  Lumy.crear(document.getElementById('fid-rig'), { emocion: 'neutral', reposo: false });
+
+  /* --- Escenario ------------------------------------------------------- */
+  const heroe = Lumy.crear(document.getElementById('escena-lumy'));
+
+  function mostrar(clave) {
+    seleccion = clave;
+    const def = E.EMOCIONES[clave];
+    heroe.setEmocion(clave, { espejo: true });
+
+    document.getElementById('escena-nombre').textContent = def.nombre;
+    document.getElementById('escena-pista').textContent = def.pista;
+    document.getElementById('escena-meta').textContent =
+      `${E.FAMILIAS[def.familia].nombre} · ${def.intensidad ? 'intensidad ' + def.intensidad : 'sin escala'} · banda ${def.banda}`;
+
+    // Solo los canales que se apartan del reposo: es lo que define la pose.
+    const p = def.pose;
+    const filas = Object.keys(p).sort()
+      .map((k) => `<b>${k}</b>: ${typeof p[k] === 'number' ? p[k] : `'${p[k]}'`}`);
+    document.getElementById('escena-canales').innerHTML =
+      filas.length ? filas.join(' &nbsp;·&nbsp; ') : '<em>reposo puro, sin desvíos</em>';
+
+    celdas.forEach((c) => c.boton.setAttribute('aria-pressed', String(c.clave === clave)));
+  }
+
+  /* --- Rejilla por familia --------------------------------------------- */
+  const orden = ['base', 'alegria', 'confianza', 'miedo', 'sorpresa',
+                 'tristeza', 'aversion', 'enojo', 'anticipacion', 'social'];
+  const cont = document.getElementById('familias');
+
+  for (const fam of orden) {
+    const claves = E.CLAVES.filter((c) => E.EMOCIONES[c].familia === fam);
+    if (!claves.length) continue;
+
+    const sec = document.createElement('section');
+    sec.className = 'familia';
+    const op = E.FAMILIAS[fam].opuesta;
+    sec.innerHTML = `
+      <div class="familia__cab">
+        <h2>${E.FAMILIAS[fam].nombre}</h2>
+        <span>${claves.length} estado${claves.length > 1 ? 's' : ''}${op ? ' · opuesta: ' + E.FAMILIAS[op].nombre : ''}</span>
+      </div>
+      <div class="rejilla"></div>`;
+    const rejilla = sec.querySelector('.rejilla');
+
+    for (const clave of claves) {
+      const def = E.EMOCIONES[clave];
+      const b = document.createElement('button');
+      b.className = 'celda';
+      b.type = 'button';
+      b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = `
+        <span class="celda__banda celda__banda--${def.banda}" title="banda ${def.banda}"></span>
+        <span class="celda__lumy"></span>
+        <div class="celda__n">${def.nombre}</div>
+        <div class="celda__i">${clave}${def.intensidad ? ' · ' + def.intensidad : ''}</div>`;
+      rejilla.appendChild(b);
+
+      const lumy = Lumy.crear(b.querySelector('.celda__lumy'), { emocion: 'neutral' });
+      lumy.setEmocion(clave, { espejo: true, duracion: 0 });
+      b.addEventListener('click', () => mostrar(clave));
+      celdas.push({ clave, boton: b, lumy });
+    }
+    cont.appendChild(sec);
+  }
+
+  document.getElementById('conteo').textContent = `${E.CLAVES.length} estados · rig v${Lumy.VERSION}`;
+
+  /* --- Controles -------------------------------------------------------- */
+  const btnReposo = document.getElementById('btn-reposo');
+  btnReposo.addEventListener('click', () => {
+    const on = btnReposo.getAttribute('aria-pressed') !== 'true';
+    btnReposo.setAttribute('aria-pressed', String(on));
+    celdas.forEach((c) => c.lumy.reposo(on));
+    heroe.reposo(on);
+  });
+
+  document.getElementById('btn-parpadeo').addEventListener('click', () => {
+    celdas.forEach((c) => c.lumy.parpadear());
+    heroe.parpadear();
+  });
+
+  let recorrido = null;
+  const btnRec = document.getElementById('btn-recorrer');
+  btnRec.addEventListener('click', () => {
+    if (recorrido) { clearInterval(recorrido); recorrido = null; btnRec.setAttribute('aria-pressed', 'false'); return; }
+    btnRec.setAttribute('aria-pressed', 'true');
+    let i = E.CLAVES.indexOf(seleccion);
+    recorrido = setInterval(() => {
+      i = (i + 1) % E.CLAVES.length;
+      mostrar(E.CLAVES[i]);
+      document.querySelector('.escena').scrollIntoView({ block: 'nearest' });
+    }, 1600);
+  });
+
+  mostrar('alegria');
+})();
+</script>
+</body>
+</html>
