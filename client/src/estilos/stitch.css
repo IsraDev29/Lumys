@@ -1,0 +1,392 @@
+/* ===========================================================================
+   Lumys* — capa de Stitch
+   ---------------------------------------------------------------------------
+   Las vistas portadas desde Stitch se envuelven en `.stitch`. Esa clase activa
+   el reset que Tailwind normalmente aplicaría a todo el documento y fija las
+   variables de paleta que no pueden ser un hex fijo.
+
+       <div className="stitch bg-background font-body-md text-on-surface">…</div>
+
+   El reset está acotado a propósito. Mientras queden vistas sin portar, en la
+   misma página conviven Bootstrap 5.3, ~3.400 líneas de CSS propio y Tailwind;
+   un preflight global les quitaría los márgenes a los <h*> y <p> de todo lo que
+   aún no se ha tocado. Cuando no quede ninguna vista heredada, esto se puede
+   sustituir por el preflight de fábrica y borrar el archivo.
+
+   ── Por qué `:where(.stitch)` y no `.stitch` ────────────────────────────────
+   Acotar un reset tiene una trampa que no se ve venir: al anteponer `.stitch`,
+   cada regla gana la especificidad de una clase. `.stitch h1` pasa a ser (0,1,1)
+   y le gana a `.text-headline-xl`, que es (0,1,0) — el titular se queda en
+   `font-size: inherit` y sale a 16 px. Lo mismo con `margin: 0` contra
+   `mb-space-md`, con `color: inherit` contra `text-primary` en los enlaces, y
+   con `max-width: 100%; height: auto` contra `w-36 h-36` en las imágenes. Es
+   decir: el reset se come medio diseño, en silencio.
+
+   `:where()` aporta especificidad cero, así que `:where(.stitch) h1` vale
+   (0,0,1) — exactamente lo mismo que el `h1` del preflight de Tailwind. El
+   alcance se mantiene y la jerarquía vuelve a ser la correcta.
+
+   ── El orden también importa ───────────────────────────────────────────────
+   Todo lo que emula la capa `base` va ARRIBA, antes de `@tailwind utilities`.
+   Debajo solo va lo que tiene que ganarles a propósito.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Tokens de la capa
+   ---------------------------------------------------------------------------
+   Estos sí llevan especificidad normal: son valores, no un reset, y
+   `.stitch-landing` tiene que poder sobrescribir a `.stitch`.
+   --------------------------------------------------------------------------- */
+
+.stitch {
+  /* Ver la nota de `tertiary-container` en tailwind.config.js: es el único
+     token que los exports de Stitch no comparten. Va canal por canal y sin
+     comas porque así lo exige la sintaxis `rgb(… / <alpha-value>)`. */
+  --stitch-tertiary-container: 209 172 84;
+}
+
+.stitch-landing {
+  --stitch-tertiary-container: 255 215 122;
+}
+
+/* ---------------------------------------------------------------------------
+   Valores iniciales de las variables de Tailwind
+   ---------------------------------------------------------------------------
+   Esto NO es decoración: sin este bloque la mitad del diseño no se dibuja.
+
+   Tailwind v3 implementa degradados, sombras, `ring`, `blur`, `backdrop-blur` y
+   las transformaciones componiendo variables: `bg-gradient-to-r` produce
+   `background-image: linear-gradient(to right, var(--tw-gradient-stops))` y
+   `shadow-sm` produce `box-shadow: var(--tw-ring-offset-shadow), …`. Quien
+   declara esas variables con un valor inicial es una regla `*, ::before,
+   ::after` que Tailwind emite en la capa `base` — la misma que se apaga con
+   `corePlugins.preflight: false`.
+
+   Sin ellas cada `var()` queda sin resolver y la propiedad entera se descarta:
+   los degradados salen `background-image: none`, las sombras `none` y el
+   desenfoque de la cabecera `backdrop-filter: none`. Es un fallo silencioso: no
+   hay error en consola, simplemente falta la mitad del acabado.
+
+   Si se sube la versión menor de Tailwind conviene regenerarlo:
+
+     npx tailwindcss -i <(echo '@tailwind base;') -o - | grep -A60 '^\*, ::before'
+   --------------------------------------------------------------------------- */
+
+:where(.stitch),
+:where(.stitch) *,
+:where(.stitch) *::before,
+:where(.stitch) *::after,
+:where(.stitch) ::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x: ;
+  --tw-pan-y: ;
+  --tw-pinch-zoom: ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position: ;
+  --tw-gradient-via-position: ;
+  --tw-gradient-to-position: ;
+  --tw-ordinal: ;
+  --tw-slashed-zero: ;
+  --tw-numeric-figure: ;
+  --tw-numeric-spacing: ;
+  --tw-numeric-fraction: ;
+  --tw-ring-inset: ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur: ;
+  --tw-brightness: ;
+  --tw-contrast: ;
+  --tw-grayscale: ;
+  --tw-hue-rotate: ;
+  --tw-invert: ;
+  --tw-saturate: ;
+  --tw-sepia: ;
+  --tw-drop-shadow: ;
+  --tw-backdrop-blur: ;
+  --tw-backdrop-brightness: ;
+  --tw-backdrop-contrast: ;
+  --tw-backdrop-grayscale: ;
+  --tw-backdrop-hue-rotate: ;
+  --tw-backdrop-invert: ;
+  --tw-backdrop-opacity: ;
+  --tw-backdrop-saturate: ;
+  --tw-backdrop-sepia: ;
+  --tw-contain-size: ;
+  --tw-contain-layout: ;
+  --tw-contain-paint: ;
+  --tw-contain-style: ;
+}
+
+/* ---------------------------------------------------------------------------
+   Reset — el preflight de Tailwind v3, acotado y sin especificidad añadida
+   --------------------------------------------------------------------------- */
+
+:where(.stitch),
+:where(.stitch) *,
+:where(.stitch) *::before,
+:where(.stitch) *::after {
+  box-sizing: border-box;
+  /* `border-width: 0` con estilo sólido es lo que hace que `border`, `border-2`
+     y `ring` dibujen algo: el estilo por defecto es `none`, así que sin esta
+     línea las clases de borde de Stitch no pintan nada. */
+  border: 0 solid #cbc4d1;
+}
+
+:where(.stitch) {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+:where(.stitch) h1,
+:where(.stitch) h2,
+:where(.stitch) h3,
+:where(.stitch) h4,
+:where(.stitch) h5,
+:where(.stitch) h6,
+:where(.stitch) p,
+:where(.stitch) figure,
+:where(.stitch) blockquote,
+:where(.stitch) dl,
+:where(.stitch) dd,
+:where(.stitch) hr,
+:where(.stitch) pre {
+  margin: 0;
+}
+
+/* Los titulares heredan tamaño y peso: en el marcado de Stitch quien manda es
+   siempre una clase (`text-headline-lg`), nunca la etiqueta. */
+:where(.stitch) h1,
+:where(.stitch) h2,
+:where(.stitch) h3,
+:where(.stitch) h4,
+:where(.stitch) h5,
+:where(.stitch) h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+:where(.stitch) ol,
+:where(.stitch) ul,
+:where(.stitch) menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.stitch) a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+:where(.stitch) b,
+:where(.stitch) strong {
+  font-weight: bolder;
+}
+
+:where(.stitch) small {
+  font-size: 80%;
+}
+
+:where(.stitch) code,
+:where(.stitch) kbd,
+:where(.stitch) samp,
+:where(.stitch) pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1em;
+}
+
+:where(.stitch) table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+:where(.stitch) button,
+:where(.stitch) input,
+:where(.stitch) optgroup,
+:where(.stitch) select,
+:where(.stitch) textarea {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+:where(.stitch) button,
+:where(.stitch) select {
+  text-transform: none;
+}
+
+:where(.stitch) button,
+:where(.stitch) [type='button'],
+:where(.stitch) [type='reset'],
+:where(.stitch) [type='submit'] {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+:where(.stitch) :-moz-focusring {
+  outline: auto;
+}
+
+:where(.stitch) progress {
+  vertical-align: baseline;
+}
+
+:where(.stitch) [type='search'] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+
+:where(.stitch) ::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+:where(.stitch) ::-webkit-file-upload-button {
+  -webkit-appearance: button;
+  font: inherit;
+}
+
+:where(.stitch) summary {
+  display: list-item;
+}
+
+:where(.stitch) fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+:where(.stitch) legend {
+  padding: 0;
+}
+
+:where(.stitch) textarea {
+  resize: vertical;
+}
+
+:where(.stitch) input::placeholder,
+:where(.stitch) textarea::placeholder {
+  opacity: 1;
+  color: #7a7581;
+}
+
+:where(.stitch) button,
+:where(.stitch) [role='button'] {
+  cursor: pointer;
+}
+
+:where(.stitch) :disabled {
+  cursor: default;
+}
+
+/* `display: block` en los reemplazados evita el hueco fantasma que deja el
+   `vertical-align: baseline` heredado bajo cada imagen e icono. */
+:where(.stitch) img,
+:where(.stitch) svg,
+:where(.stitch) video,
+:where(.stitch) canvas,
+:where(.stitch) audio,
+:where(.stitch) iframe,
+:where(.stitch) embed,
+:where(.stitch) object {
+  display: block;
+  vertical-align: middle;
+}
+
+:where(.stitch) img,
+:where(.stitch) video {
+  max-width: 100%;
+  height: auto;
+}
+
+:where(.stitch) [hidden] {
+  display: none;
+}
+
+/* ===========================================================================
+   Las utilidades, después de todo lo anterior — ver la nota de cabecera
+   =========================================================================== */
+
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Material Symbols — la iconografía de los mockups
+   ---------------------------------------------------------------------------
+   Va después de las utilidades y con especificidad de clase a propósito: tiene
+   que ganarle al `font-body-md` que el marcado de Stitch pone en el contenedor.
+   Si la familia no es la del icono, el <span> muestra el nombre de la ligadura
+   escrito en letras («arrow_forward») en mitad del botón.
+   --------------------------------------------------------------------------- */
+
+.stitch .material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.stitch .material-symbols-outlined.is-fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Barras de desplazamiento — los mockups las ocultan. */
+.stitch .sin-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.stitch .sin-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Respeto por `prefers-reduced-motion`
+   ---------------------------------------------------------------------------
+   Las pantallas de Stitch animan bastante —pulsos de respiración, flotaciones,
+   apariciones al hacer scroll—. Nada de eso comunica información que no esté ya
+   en el texto, así que con la preferencia activada se apaga entero en vez de
+   intentar reducirlo caso por caso.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .stitch *,
+  .stitch *::before,
+  .stitch *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

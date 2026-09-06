@@ -1,0 +1,163 @@
+/* ==========================================================================
+   Lumys* — Paneles de acompañamiento (orientador, psicólogo, institución)
+   El panel muestra señales y conducta observable, nunca diagnósticos.
+   ========================================================================== */
+
+/* --- Hero del estudiante (gemelo digital) --------------------------------- */
+.lm-home-hero {
+  display: grid;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+@media (max-width: 860px) { .lm-home-hero { grid-template-columns: minmax(0, 1fr); } }
+
+.lm-clima {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-4);
+}
+.lm-clima__orb {
+  width: 92px; height: 82px; flex: none;
+  border-radius: 52% 48% 44% 56% / 58% 52% 48% 42%;
+  background: radial-gradient(circle at 34% 30%, var(--lm-white), var(--lm-clima-nublado));
+  box-shadow: inset 0 -8px 18px rgba(var(--lm-emerald-900-rgb), 0.14);
+  animation: lm-float 6s var(--lm-ease) infinite;
+}
+.lm-clima__orb[data-clima="despejado"] { background: radial-gradient(circle at 34% 30%, #fffaf0, var(--lm-clima-despejado)); }
+.lm-clima__orb[data-clima="parcial"] { background: radial-gradient(circle at 34% 30%, #f6fbff, var(--lm-clima-parcial)); }
+.lm-clima__orb[data-clima="nublado"] { background: radial-gradient(circle at 34% 30%, #f6f7fb, var(--lm-clima-nublado)); }
+.lm-clima__orb[data-clima="lluvia"] { background: radial-gradient(circle at 34% 30%, #eef1f8, var(--lm-clima-lluvia)); }
+
+.lm-clima__title { font-family: var(--lm-font-display); font-weight: 700; font-size: 1.28rem; color: var(--lm-emerald-900); line-height: 1.2; }
+.lm-clima__sub { font-size: 0.9rem; color: var(--lm-ink-soft); }
+
+/* --- Tarjeta de caso ------------------------------------------------------- */
+.lm-caso {
+  display: grid;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-4);
+  background: var(--lm-white);
+  border: 1px solid var(--lm-line);
+  border-left: 4px solid var(--lm-teal);
+  border-radius: var(--lm-radius);
+  transition: transform var(--lm-dur) var(--lm-ease), box-shadow var(--lm-dur) var(--lm-ease);
+  cursor: pointer;
+}
+.lm-caso:hover { transform: translateY(-2px); box-shadow: var(--lm-shadow); }
+.lm-caso[data-nivel="2"] { border-left-color: var(--lm-nivel-2); }
+.lm-caso[data-nivel="3"] { border-left-color: var(--lm-nivel-3); }
+
+.lm-caso__head { display: flex; align-items: center; gap: var(--lm-sp-3); }
+.lm-caso__name { font-family: var(--lm-font-display); font-weight: 600; color: var(--lm-emerald-900); line-height: 1.2; }
+.lm-caso__meta { font-size: var(--lm-fs-caption); color: var(--lm-ink-muted); }
+
+/* Lenguaje descriptivo, nunca etiquetas */
+.lm-caso__señales { display: flex; flex-wrap: wrap; gap: var(--lm-sp-2); }
+.lm-caso__señal {
+  font-size: var(--lm-fs-caption);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-cream-deep);
+  color: var(--lm-ink-soft);
+  border: 1px solid var(--lm-line);
+}
+
+.lm-caso__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--lm-sp-2); }
+.lm-caso__foot .lm-btn { margin-left: auto; }
+
+/* --- Columnas de seguimiento ---------------------------------------------- */
+.lm-board {
+  display: grid;
+  gap: clamp(0.85rem, 2vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  align-items: start;
+}
+
+.lm-board__col {
+  background: var(--lm-cream-soft);
+  border: 1px solid var(--lm-line);
+  border-radius: var(--lm-radius-lg);
+  padding: var(--lm-sp-4);
+}
+.lm-board__col-head {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-2);
+  margin-bottom: var(--lm-sp-4);
+  padding-bottom: var(--lm-sp-3);
+  border-bottom: 1px solid var(--lm-line);
+}
+.lm-board__col-title { font-family: var(--lm-font-display); font-weight: 600; font-size: 0.98rem; color: var(--lm-emerald-900); margin: 0; }
+.lm-board__count {
+  margin-left: auto;
+  min-width: 26px; height: 26px;
+  border-radius: var(--lm-radius-pill);
+  display: grid; place-items: center;
+  background: var(--lm-emerald-050);
+  color: var(--lm-emerald);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0 8px;
+}
+.lm-board__list { display: grid; gap: var(--lm-sp-3); }
+
+/* --- Línea de tiempo del caso ---------------------------------------------- */
+.lm-timeline { position: relative; padding-left: 1.85rem; }
+.lm-timeline::before {
+  content: "";
+  position: absolute;
+  left: 8px; top: 6px; bottom: 6px;
+  width: 2px;
+  background: var(--lm-emerald-100);
+}
+.lm-timeline__item { position: relative; padding-bottom: var(--lm-sp-4); }
+.lm-timeline__item:last-child { padding-bottom: 0; }
+.lm-timeline__item::before {
+  content: "";
+  position: absolute;
+  left: -1.85rem; top: 5px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--lm-white);
+  border: 3px solid var(--lm-teal);
+}
+.lm-timeline__item--warm::before { border-color: var(--lm-terracotta); }
+.lm-timeline__item--done::before { background: var(--lm-teal); }
+.lm-timeline__time { font-size: var(--lm-fs-caption); color: var(--lm-ink-muted); font-weight: 500; }
+.lm-timeline__text { font-size: 0.93rem; color: var(--lm-ink-soft); }
+.lm-timeline__text strong { color: var(--lm-emerald-900); }
+
+/* --- Panel institucional: métricas agregadas ------------------------------- */
+.lm-kpi-grid {
+  display: grid;
+  gap: clamp(0.75rem, 1.8vw, 1.1rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+
+.lm-anon-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--lm-fs-caption);
+  color: var(--lm-ink-muted);
+}
+.lm-anon-note i { color: var(--lm-teal); }
+
+/* Barras horizontales comparativas (por aula, por grado) */
+.lm-bar-row { display: grid; grid-template-columns: minmax(88px, 132px) minmax(0, 1fr) auto; gap: var(--lm-sp-3); align-items: center; padding: 0.55rem 0; }
+.lm-bar-row__label { font-size: 0.88rem; color: var(--lm-ink-soft); font-weight: 500; }
+.lm-bar-row__track { height: 12px; border-radius: var(--lm-radius-pill); background: var(--lm-cream-deep); overflow: hidden; }
+.lm-bar-row__fill { height: 100%; border-radius: inherit; background: var(--lm-teal); width: 0; transition: width var(--lm-dur-slow) var(--lm-ease); }
+.lm-bar-row__fill--warm { background: var(--lm-terracotta); }
+.lm-bar-row__value { font-family: var(--lm-font-display); font-weight: 700; font-size: 0.9rem; color: var(--lm-emerald-900); min-width: 42px; text-align: right; }
+
+/* --- Ficha lateral del caso ------------------------------------------------ */
+.lm-drawer .offcanvas-header { border-bottom: 1px solid var(--lm-line); background: var(--lm-cream-soft); }
+.lm-drawer .offcanvas-title { font-family: var(--lm-font-display); color: var(--lm-emerald-900); }
+.lm-drawer .offcanvas-body { background: var(--lm-cream); }
+
+/* --- Matriz de permisos ---------------------------------------------------- */
+.lm-permisos td i { font-size: 1.05rem; }
+.lm-permisos .si { color: var(--lm-teal); }
+.lm-permisos .no { color: var(--lm-ink-muted); opacity: 0.55; }

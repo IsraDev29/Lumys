@@ -1,78 +1,25 @@
-const Anthropic = require('@anthropic-ai/sdk');
 const prompts = require('./ia.prompt');
 const seguridad = require('./ia.seguridad');
+const proveedores = require('./proveedores');
 
 // ---------------------------------------------------------------------------
-// Cliente de Claude
+// Servicio de IA
 //
-// El módulo tiene que poder cargarse sin API key: el resto del backend (auth,
-// usuarios, historial) no debería caerse porque falte una variable de entorno
-// del módulo de IA. Sin clave, `hayIA()` devuelve false y cada función usa su
-// respaldo local.
+// Este archivo ya no habla con ninguna API concreta: le pide a la capa de
+// proveedores (ver proveedores/index.js) y ella decide si atiende el modelo
+// local o el remoto según lo que se esté pidiendo. Acá queda lo que no depende
+// del proveedor — qué se pregunta, cómo se normaliza la respuesta y qué pasa
+// cuando no responde nadie.
+//
+// El módulo tiene que poder cargarse sin ninguna IA configurada: el resto del
+// backend (auth, usuarios, historial) no debería caerse porque falte una
+// variable de entorno del módulo de IA. Sin proveedores, cada función usa su
+// respaldo local y marca `generado: false`.
 // ---------------------------------------------------------------------------
 
-const MODELO = process.env.IA_MODELO || 'claude-opus-4-8';
-
-let cliente = null;
-
-function obtenerCliente() {
-    if (cliente) return cliente;
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return null;
-
-    cliente = new Anthropic({ apiKey, maxRetries: 2 });
-    return cliente;
-}
-
+/** Si algún proveedor puede atender ahora mismo. */
 function hayIA() {
-    return Boolean(process.env.ANTHROPIC_API_KEY);
-}
-
-/**
- * Una sola puerta hacia la API. Centraliza tres cosas que si no quedan
- * repetidas en cada llamada: el esfuerzo del modelo, las salidas
- * estructuradas y el marcado de caché del prompt estable.
- *
- * `esfuerzo` es la palanca principal de latencia. Un turno de conversación se
- * responde con el estudiante mirando la pantalla, así que va en 'low'; el
- * análisis corre después de guardar y alimenta la detección de riesgo, así que
- * va en 'high'. Es la misma inteligencia, distinta profundidad.
- */
-async function pedirJson({ sistema, usuario, esquema, maxTokens = 1024, esfuerzo = 'low' }) {
-    const api = obtenerCliente();
-    if (!api) throw new Error('IA no configurada');
-
-    const respuesta = await api.messages.create({
-        model: MODELO,
-        max_tokens: maxTokens,
-        // El bloque `sistema` es idéntico en todas las llamadas del mismo tipo,
-        // así que se marca para caché. Ojo: en Opus el prefijo mínimo cacheable
-        // son 4096 tokens — por debajo de eso la marca no rompe nada pero
-        // tampoco ahorra. Con la persona del check-in crecida sí paga.
-        system: [{ type: 'text', text: sistema, cache_control: { type: 'ephemeral' } }],
-        thinking: { type: 'adaptive' },
-        output_config: {
-            effort: esfuerzo,
-            format: { type: 'json_schema', schema: esquema },
-        },
-        messages: [{ role: 'user', content: usuario }],
-    });
-
-    // Una negativa del clasificador llega como HTTP 200 con content vacío. Sin
-    // esta guarda, el .find() de abajo devuelve undefined y el error real
-    // ("no se puede leer .text") no dice nada de lo que pasó.
-    if (respuesta.stop_reason === 'refusal') {
-        const error = new Error('El modelo declinó responder');
-        error.codigo = 'REFUSAL';
-        error.detalle = respuesta.stop_details || null;
-        throw error;
-    }
-
-    const bloque = respuesta.content.find((b) => b.type === 'text');
-    if (!bloque) throw new Error('Respuesta del modelo sin texto');
-
-    return JSON.parse(bloque.text);
+    return proveedores.hayAlguno();
 }
 
 // ---------------------------------------------------------------------------
@@ -99,28 +46,18 @@ async function siguienteTurno({ nombre, racha = 0, memoria = [], sesion = [] }) 
     // parezcan aunque el modelo tienda a su forma preferida.
     const angulo = prompts.ANGULOS[sesion.length % prompts.ANGULOS.length];
 
-    const contexto = prompts.contextoDeTurno({
-        nombre,
-        momento: momentoDelDia(),
-        racha,
-        memoria,
-        sesion,
-        angulo,
-    });
+    const datos = { nombre, momento: momentoDelDia(), racha, memoria, sesion, angulo };
 
     try {
-        const turno = await pedirJson({
-            sistema: prompts.PERSONA_CHECKIN,
-            usuario: contexto,
-            esquema: prompts.ESQUEMA_TURNO,
-            maxTokens: 900,
+        const { datos: turno, proveedor } = await proveedores.generar({
+            construir: (perfil) => prompts.turnoPara(perfil, datos),
             esfuerzo: 'low',
         });
 
-        return { ...normalizarTurno(turno, sesion), generado: true };
+        return { ...normalizarTurno(turno, sesion), generado: true, proveedor };
     } catch (error) {
         console.error('[IA] turno de check-in:', error.message);
-        return { ...turnoDeRespaldo(sesion), generado: false };
+        return { ...turnoDeRespaldo(sesion), generado: false, proveedor: null };
     }
 }
 
@@ -263,31 +200,35 @@ function turnoDeRespaldo(sesion) {
  * El nivel de riesgo que sale de acá ya viene combinado con el léxico
  * determinista: el modelo puede subirlo, nunca bajarlo. Ver ia.seguridad.js.
  */
-async function analizarCheckin({ turnos, textoLibre, icve, lineaBase, delta }) {
+async function analizarCheckin({ turnos, textoLibre, icve, lineaBase, delta, desviados = [] }) {
     const porLexico = seguridad.evaluarTexto(
         [textoLibre, ...turnos.map((t) => t.respuesta)].filter(Boolean).join(' \n '),
     );
 
-    const contexto = prompts.contextoDeAnalisis({ turnos, textoLibre, icve, lineaBase, delta });
+    // `desviados` llega vacío por defecto para que los llamadores que no tienen
+    // historial (analizarTexto, pruebas) sigan funcionando: el contexto se
+    // degrada, no se rompe.
+    const datos = { turnos, textoLibre, icve, lineaBase, delta, desviados };
 
     let analisis;
+    let generado = true;
     try {
-        analisis = await pedirJson({
-            sistema: prompts.SISTEMA_ANALISIS,
-            usuario: contexto,
-            esquema: prompts.ESQUEMA_ANALISIS,
-            maxTokens: 1600,
+        const resultado = await proveedores.generar({
+            construir: (perfil) => prompts.analisisPara(perfil, datos),
             esfuerzo: 'high',
         });
+        analisis = resultado.datos;
     } catch (error) {
         console.error('[IA] análisis de check-in:', error.message);
         analisis = analisisDeRespaldo({ icve, delta, porLexico });
+        generado = false;
     }
 
     const riesgo = seguridad.combinar(porLexico.etiqueta, analisis.lenguaje_riesgo);
 
     return {
         ...analisis,
+        generado,
         lenguaje_riesgo: riesgo.etiqueta,
         nivel_riesgo: riesgo.nivel,
         // Se guarda de dónde salió cada mitad del veredicto: sin esto, revisar
@@ -344,10 +285,10 @@ async function analizarTexto(texto) {
 }
 
 module.exports = {
-    MODELO,
     hayIA,
-    pedirJson,
     siguienteTurno,
+    normalizarTurno,
+    turnoDeRespaldo,
     analizarCheckin,
     analizarTexto,
 };

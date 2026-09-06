@@ -38,6 +38,12 @@ async function listar(req, res, next) {
                 icve: r.puntajeIcve,
                 texto: r.textoLibre,
                 coach: r.resumenIa,
+                // Cuánto del check-in se llegó a cubrir, de 0 a 1. Es lo que
+                // separa "pasó y contestó dos cosas" de "hizo el check-in
+                // entero", que es la distinción que dibuja el calendario de
+                // constancia. Sin esto el calendario solo puede pintar
+                // "apareció / no apareció" y su leyenda de tres niveles miente.
+                cobertura: r.respuestas?.cobertura ?? null,
                 // Los factores son lo que hace explicable el puntaje: sin ellos
                 // el historial es una línea que sube y baja sin motivo visible.
                 etiquetas: (r.respuestas?.analisis?.factores || []).map((f) => f.factor),
@@ -65,12 +71,25 @@ async function crear(req, res, next) {
 
         // Se necesita la línea base ANTES de analizar, para que el modelo pueda
         // hablar de "más alto que tu promedio" en vez de solo describir hoy.
+        //
+        // Se trae también `patronNormal` —la media móvil de cada componente por
+        // separado— porque un solo número global esconde justo lo que hace útil
+        // el análisis. Dos estudiantes con el mismo ICVE de 62 pueden estar en
+        // situaciones opuestas: uno durmiendo mal y el otro dejando de hablar
+        // con la gente. `componentesDesviados` es lo que permite distinguirlos,
+        // y hasta ahora se calculaba DESPUÉS de llamar al modelo (en
+        // procesarRegistro), así que el modelo nunca lo veía.
         const lineaBase = await prisma.lineaBase.findUnique({
             where: { estudianteId },
-            select: { promedioIcveMovil: true },
+            select: { promedioIcveMovil: true, patronNormal: true },
         });
         const referencia = lineaBase?.promedioIcveMovil ?? null;
         const delta = referencia === null || puntaje === null ? null : Math.round(puntaje - referencia);
+
+        // Números derivados, no texto: qué componente se movió y cuánto respecto
+        // a lo habitual DE ESE estudiante. Esto no toca la promesa de privacidad
+        // —no hay una sola palabra suya acá— y es la señal más rica que tenemos.
+        const desviados = icve.componentesDesviados(componentes, lineaBase?.patronNormal);
 
         const analisis = await iaService.analizarCheckin({
             turnos,
@@ -78,6 +97,7 @@ async function crear(req, res, next) {
             icve: puntaje,
             lineaBase: referencia,
             delta,
+            desviados,
         });
 
         // La voz es opcional y no mueve el puntaje: solo suma un factor que un
@@ -86,6 +106,11 @@ async function crear(req, res, next) {
         if (voz) {
             analisisVoz = await vozService.analizarVoz({
                 caracteristicas: voz.caracteristicas,
+                // Comparar contra su propio promedio y no solo contra rangos de
+                // manual: hablar lento no dice nada, hablar más lento que uno
+                // mismo sí. Requiere historial, así que los primeros check-ins
+                // con voz solo se comparan con la referencia general.
+                propioPromedio: await promedioDeVoz(estudianteId),
                 consentimiento: voz.consentimiento,
             });
         }
@@ -93,7 +118,16 @@ async function crear(req, res, next) {
         const registro = await prisma.checkIn.create({
             data: {
                 estudianteId,
-                respuestas: { turnos, componentes, cobertura, analisis, voz: analisisVoz },
+                respuestas: {
+                    turnos,
+                    componentes,
+                    cobertura,
+                    analisis,
+                    // Se guardan las características junto al análisis porque son
+                    // la materia prima del promedio propio del próximo check-in.
+                    // Son seis números, nunca audio ni transcripción.
+                    voz: analisisVoz ? { ...analisisVoz, caracteristicas: voz.caracteristicas } : null,
+                },
                 textoLibre,
                 resumenIa: analisis.coach,
                 puntajeIcve: puntaje,
@@ -137,6 +171,23 @@ async function crear(req, res, next) {
     } catch (error) {
         next(error);
     }
+}
+
+/**
+ * Promedio prosódico del estudiante a partir de sus últimas notas de voz.
+ *
+ * Se limita a 10 registros: el interés es cómo viene hablando últimamente, no
+ * cómo hablaba hace medio año. Una voz cambia sola a esa edad.
+ */
+async function promedioDeVoz(estudianteId) {
+    const registros = await prisma.checkIn.findMany({
+        where: { estudianteId },
+        orderBy: { fecha: 'desc' },
+        take: 10,
+        select: { respuestas: true },
+    });
+
+    return vozService.promedioPropio(registros);
 }
 
 /**

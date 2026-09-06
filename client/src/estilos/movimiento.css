@@ -1,0 +1,262 @@
+/* ==========================================================================
+   Lumys* — Sistema de movimiento
+
+   Todo el movimiento de la aplicación se declara acá, y todo se apoya en dos
+   propiedades: `transform` y `opacity`. Son las únicas dos que el navegador
+   puede animar en el compositor, sin volver a calcular layout ni repintar. Eso
+   es lo que permite que la interfaz vaya a 60 fps en el teléfono de gama baja
+   de un estudiante y no solo en la laptop de quien la diseñó.
+
+   Reglas de la casa:
+
+     1. Nada anima `width`, `height`, `top`, `left`, `margin` ni `box-shadow`
+        en bucle. Si algo tiene que crecer, crece con `scale`.
+     2. Las animaciones ambientales (las que no paran nunca: Lumy flotando, el
+        halo respirando) son lentas —4 s o más— y de amplitud pequeña. Una
+        animación ambiental rápida es ruido, y en una app de salud mental el
+        ruido visual cuesta caro.
+     3. Nada se mueve más de 24 px ni dura más de 600 ms al entrar. Pasado eso
+        deja de leerse como respuesta y empieza a leerse como espera.
+     4. `will-change` se declara solo donde hay movimiento continuo. Ponerlo en
+        todo mantiene capas de composición vivas y consume memoria de vídeo.
+
+   El bloque final apaga todo bajo `prefers-reduced-motion`. No es opcional:
+   parte del público objetivo tiene trastornos vestibulares o de ansiedad, y en
+   esos casos el movimiento no es decorativo sino un síntoma que se dispara.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Entradas — se disparan una vez, al aparecer el elemento
+   ========================================================================== */
+
+@keyframes lm-aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes lm-subir {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes lm-bajar {
+  from { opacity: 0; transform: translate3d(0, -14px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes lm-entrar-derecha {
+  from { opacity: 0; transform: translate3d(22px, 0, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes lm-brotar {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Para lo que celebra algo: la insignia de constancia, el sello del check-in
+   terminado. Sobrepasa y vuelve — por eso son tres pasos y no dos. */
+@keyframes lm-brotar-rebote {
+  0%   { opacity: 0; transform: scale(0.7); }
+  60%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.lm-anim-subir   { animation: lm-subir   var(--lm-dur-slow) var(--lm-ease) both; }
+.lm-anim-bajar   { animation: lm-bajar   var(--lm-dur-slow) var(--lm-ease) both; }
+.lm-anim-aparecer{ animation: lm-aparecer var(--lm-dur-slow) var(--lm-ease) both; }
+.lm-anim-brotar  { animation: lm-brotar  var(--lm-dur) var(--lm-ease-suave) both; }
+.lm-anim-celebra { animation: lm-brotar-rebote 620ms var(--lm-ease-suave) both; }
+
+/* ==========================================================================
+   2. Escalonado (stagger)
+
+   Una lista donde todo entra a la vez se lee como un parpadeo. Escalonada, el
+   ojo la recorre en el orden en que hay que leerla. El retardo lo pone una
+   variable en línea (`style={{ '--i': n }}`) porque el número de elementos lo
+   decide el servidor, no la hoja de estilos.
+
+   El tope de 8 es a propósito: a partir del noveno elemento el retardo
+   acumulado ya se siente como lentitud. Del noveno en adelante entran todos
+   juntos con el retardo del octavo.
+   ========================================================================== */
+
+.lm-stagger > * {
+  animation: lm-subir var(--lm-dur-slow) var(--lm-ease) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 55ms);
+}
+
+.lm-anim-retardo { animation-delay: calc(min(var(--i, 0), 8) * 55ms); }
+
+/* ==========================================================================
+   3. Revelado al hacer scroll
+
+   Lo aplica `useRevelar()` (ver lib/movimiento.ts). El elemento arranca
+   desplazado y transparente; cuando el IntersectionObserver lo ve, se le pone
+   `data-visible="si"` y viaja a su sitio.
+
+   Es una transición y no una animación a propósito: si el observador nunca
+   llega a dispararse —porque el navegador no lo soporta o porque JavaScript
+   falló— basta con que el atributo esté puesto de entrada para que el
+   contenido se vea. Con `animation` un fallo dejaría la página en blanco.
+   ========================================================================== */
+
+.lm-revelar {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity var(--lm-dur-slow) var(--lm-ease),
+    transform var(--lm-dur-slow) var(--lm-ease);
+  transition-delay: calc(min(var(--i, 0), 8) * 60ms);
+}
+
+.lm-revelar[data-visible='si'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ==========================================================================
+   4. Movimiento ambiental — no para nunca, así que va despacio
+   ========================================================================== */
+
+/* Lumy flotando. La rotación mínima evita que parezca un ascensor. */
+@keyframes lm-flotar {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50%      { transform: translate3d(0, -9px, 0) rotate(-1.4deg); }
+}
+
+/* Halo de respiración: el ritmo de la guía de respiración de la app (4 s de
+   inhalación, 4 s de exhalación). Que el fondo respire al mismo compás que se
+   le pide al estudiante no es casualidad. */
+@keyframes lm-respirar {
+  0%, 100% { transform: scale(1);    opacity: 0.55; }
+  50%      { transform: scale(1.09); opacity: 0.85; }
+}
+
+/* La forma orgánica del isotipo, deformándose despacio. */
+@keyframes lm-blob {
+  0%, 100% { border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%; transform: rotate(0deg); }
+  50%      { border-radius: 58% 42% 44% 56% / 44% 58% 42% 56%; transform: rotate(6deg); }
+}
+
+/* Recorrido del degradado de marca. Se anima `background-position`, que en un
+   degradado no fuerza layout. Solo se usa en superficies chicas (el trazo del
+   logotipo, el borde de la píldora activa), nunca a pantalla completa. */
+@keyframes lm-iridiscente {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+.lm-flota    { animation: lm-flotar var(--lm-dur-ambiente) var(--lm-ease) infinite; will-change: transform; }
+.lm-respira  { animation: lm-respirar 8s var(--lm-ease) infinite; will-change: transform, opacity; }
+.lm-blob     { animation: lm-blob 12s var(--lm-ease) infinite; }
+
+.lm-iridiscente {
+  background: var(--lm-degradado-marca);
+  background-size: 220% 220%;
+  animation: lm-iridiscente 9s ease infinite;
+}
+
+/* Texto con el degradado del isotipo. Se reserva a una palabra por pantalla:
+   en cuanto se repite deja de ser un acento y se vuelve decoración. */
+.lm-texto-marca {
+  background: var(--lm-degradado-marca);
+  background-size: 220% 220%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lm-iridiscente 9s ease infinite;
+}
+
+/* ==========================================================================
+   5. Pulso de atención
+
+   Para el botón de SOS y la píldora del check-in pendiente. Anillo que se
+   expande y se desvanece, dibujado en un pseudoelemento para que el pulso no
+   arrastre al contenido del botón.
+   ========================================================================== */
+
+@keyframes lm-pulso-anillo {
+  0%   { transform: scale(1);    opacity: 0.5; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.lm-pulso { position: relative; }
+.lm-pulso::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: lm-pulso-anillo 2.4s var(--lm-ease) infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ==========================================================================
+   6. Carga
+   ========================================================================== */
+
+@keyframes lm-shimmer { to { background-position: -220% 0; } }
+
+@keyframes lm-girar { to { transform: rotate(360deg); } }
+
+/* ==========================================================================
+   7. Respuesta al tacto
+
+   En un teléfono no hay `:hover`. Lo único que confirma que el toque llegó es
+   que el elemento ceda un poco. 0.97 es suficiente para sentirse y demasiado
+   poco para notarse como animación.
+   ========================================================================== */
+
+.lm-presionable {
+  transition: transform var(--lm-dur-fast) var(--lm-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.lm-presionable:active { transform: scale(0.97); }
+
+/* ==========================================================================
+   8. Transición entre vistas
+
+   `startViewTransition` (ver lib/movimiento.ts) hace un fundido cruzado entre
+   la vista que sale y la que entra. Donde el navegador no lo soporta no pasa
+   nada: se navega sin transición, que es exactamente lo que se hacía antes.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: lm-aparecer 180ms var(--lm-ease-salida) reverse both;
+  }
+  ::view-transition-new(root) {
+    animation: lm-subir 320ms var(--lm-ease) both;
+  }
+}
+
+/* ==========================================================================
+   9. Cortafuegos de accesibilidad
+
+   Se apaga el movimiento, no el contenido. Todo lo que animaba su entrada
+   tiene que quedar visible y en su sitio: por eso se fuerza `opacity: 1` y se
+   quita el desplazamiento, en vez de limitarse a poner las duraciones a cero.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .lm-revelar,
+  .lm-revelar[data-visible='no'] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .lm-pulso::before { display: none; }
+}

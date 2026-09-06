@@ -2,6 +2,7 @@ const prisma = require('../db');
 const iaService = require('./ia.service');
 const vozService = require('./ia.voz.service');
 const seguridad = require('./ia.seguridad');
+const proveedoresIa = require('./proveedores');
 
 // ---------------------------------------------------------------------------
 // Contexto del estudiante
@@ -39,21 +40,33 @@ function calcularRacha(fechas) {
 }
 
 async function contextoDelEstudiante(estudianteId) {
-    const recientes = await prisma.checkIn.findMany({
-        where: { estudianteId },
-        orderBy: { fecha: 'desc' },
-        take: 30,
-        select: { fecha: true, respuestas: true },
-    });
+    // Dos consultas y no una: la racha necesita 30 fechas, la memoria necesita 3
+    // explicaciones. Traer las dos cosas juntas obligaba a arrastrar el `respuestas`
+    // completo de 30 check-ins —turnos incluidos, hasta 2000 caracteres cada
+    // uno— para descartar 27 en memoria, y eso pasa en CADA turno del check-in.
+    const [dias, ultimos] = await Promise.all([
+        prisma.checkIn.findMany({
+            where: { estudianteId },
+            orderBy: { fecha: 'desc' },
+            take: 30,
+            select: { fecha: true },
+        }),
+        prisma.checkIn.findMany({
+            where: { estudianteId },
+            orderBy: { fecha: 'desc' },
+            take: 3,
+            select: { respuestas: true },
+        }),
+    ]);
 
-    // Solo los tres últimos alimentan el prompt. Más historial no mejora la
-    // pregunta y sí encarece cada turno.
-    const memoria = recientes
-        .slice(0, 3)
+    // Lo que se le pasa al modelo es la explicación que él mismo escribió: una
+    // paráfrasis, nunca lo que el estudiante tecleó. La memoria de Lumy es de
+    // patrones, no de frases.
+    const memoria = ultimos
         .map((r) => r.respuestas?.analisis?.explicacion)
         .filter((texto) => typeof texto === 'string' && texto.length);
 
-    return { racha: calcularRacha(recientes.map((r) => r.fecha)), memoria };
+    return { racha: calcularRacha(dias.map((r) => r.fecha)), memoria };
 }
 
 /**
@@ -101,8 +114,19 @@ async function analizarTexto(req, res, next) {
 /** POST /ia/analizar-voz — requiere consentimiento explícito. */
 async function analizarVoz(req, res, next) {
     try {
+        // El promedio propio sale de la base, nunca del cuerpo de la petición:
+        // el historial no es del cliente, y aceptarlo desde el navegador
+        // permitiría fabricar una desviación que no ocurrió.
+        const registros = await prisma.checkIn.findMany({
+            where: { estudianteId: req.usuario.id },
+            orderBy: { fecha: 'desc' },
+            take: 10,
+            select: { respuestas: true },
+        });
+
         const analisis = await vozService.analizarVoz({
             caracteristicas: req.body.caracteristicas,
+            propioPromedio: vozService.promedioPropio(registros),
             consentimiento: req.body.consentimiento,
         });
         res.status(200).json(analisis);
@@ -112,18 +136,28 @@ async function analizarVoz(req, res, next) {
 }
 
 /**
- * GET /ia/estado — si el módulo tiene clave configurada.
+ * GET /ia/estado — qué proveedores pueden atender ahora mismo.
  *
- * El frontend lo usa para saber si está hablando con el modelo o con el banco
+ * El frontend lo usa para saber si está hablando con un modelo o con el banco
  * local, y mostrarlo. Que el estudiante sepa cuándo hay IA detrás y cuándo no
  * es parte de lo que la plataforma promete sobre sus datos.
+ *
+ * El desglose por proveedor sirve además para operar: es la forma de ver desde
+ * afuera si el modelo local está levantado sin entrar a la máquina.
  */
-function estado(req, res) {
-    res.status(200).json({
-        disponible: iaService.hayIA(),
-        modelo: iaService.hayIA() ? iaService.MODELO : null,
-        niveles_riesgo: seguridad.NOMBRE_DE_NIVEL,
-    });
+async function estado(req, res, next) {
+    try {
+        const { estrategia, proveedores } = await proveedoresIa.estado();
+
+        res.status(200).json({
+            disponible: Object.values(proveedores).some((p) => p.disponible),
+            estrategia,
+            proveedores,
+            niveles_riesgo: seguridad.NOMBRE_DE_NIVEL,
+        });
+    } catch (error) {
+        next(error);
+    }
 }
 
 module.exports = {

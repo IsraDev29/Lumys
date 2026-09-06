@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Lumy · Sorpresa (sorpresa)
+     sorpresa · intensidad 2 · banda apoyo
+     "¡No te lo esperabas!"
+
+     Generado por tools/lumy-exportar-svg.js desde client/src/lumy/emociones.ts.
+     NO editar a mano: se regenera. Para cambiar la pose, tocá el catálogo.  -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 207 176" width="207" height="176"
+     role="img" aria-label="Lumy — Sorpresa">
+  <title>Lumy — Sorpresa</title>
+  <desc>¡No te lo esperabas!</desc>
+  <defs>
+    <radialGradient id="cuerpo" cx="33%" cy="22%" r="86%">
+      <stop offset="0%" stop-color="#F2FEFF"/>
+      <stop offset="26%" stop-color="#D8F8FC"/>
+      <stop offset="52%" stop-color="#AFECF3"/>
+      <stop offset="76%" stop-color="#6ED4E0"/>
+      <stop offset="100%" stop-color="#299FB0"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0.48" x2="0.18" y2="1">
+      <stop offset="0%" stop-color="#157F90" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#157F90" stop-opacity="0.42"/>
+    </linearGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF7ED" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#FFF7ED" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="52%" stop-color="#9CE4EE" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#9CE4EE" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="soft2" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+    <clipPath id="parpado-izq"><polygon points="-20,-18 20,-18 20,18 -20,18"/></clipPath>
+    <clipPath id="parpado-der"><polygon points="-20,-18 20,-18 20,18 -20,18"/></clipPath>
+  </defs>
+
+  <g id="mundo" transform="translate(-17 -30)">
+    <g id="fx-tras"><g id="fx-lineas" opacity="0.65"><g stroke="#0F766E" stroke-width="3" stroke-linecap="round" opacity="0.4">
+    <path d="M32 60 l-11-9"/><path d="M120 26 l0-13"/><path d="M208 60 l11-9"/>
+    <path d="M26 130 l-13 3"/><path d="M214 130 l13 3"/></g></g></g>
+
+    <ellipse id="aura" cx="120" cy="118" rx="96" ry="81"
+             fill="url(#halo)" opacity="1.2" transform="translate(0, 0) translate(120, 118) rotate(0) scale(1, 1) translate(-120, -118)"/>
+
+    <g id="cuerpo" transform="translate(0, -4) translate(125, 115) rotate(0) scale(0.96, 1.06) translate(-125, -115)">
+      <path id="blob" d="M204.80 116.00 C203.67 132.59 187.31 151.18 173.17 162.79 C159.04 174.41 139.14 184.45 120.00 185.70 C100.86 186.94 70.74 181.88 58.34 170.26 C45.94 158.64 44.37 133.01 45.60 116.00 C46.83 98.99 53.29 80.06 65.69 68.21 C78.09 56.36 100.96 45.73 120.00 44.90 C139.04 44.07 165.83 51.38 179.96 63.23 C194.10 75.08 205.93 99.41 204.80 116.00 Z" fill="url(#cuerpo)"/>
+      <path id="rim" d="M204.80 116.00 C203.67 132.59 187.31 151.18 173.17 162.79 C159.04 174.41 139.14 184.45 120.00 185.70 C100.86 186.94 70.74 181.88 58.34 170.26 C45.94 158.64 44.37 133.01 45.60 116.00 C46.83 98.99 53.29 80.06 65.69 68.21 C78.09 56.36 100.96 45.73 120.00 44.90 C139.04 44.07 165.83 51.38 179.96 63.23 C194.10 75.08 205.93 99.41 204.80 116.00 Z" fill="url(#rim)"/>
+      <ellipse id="core" cx="112" cy="128" rx="58" ry="46" fill="url(#core)"/>
+      <g id="brillos" opacity="1">
+        <g filter="url(#soft)" opacity="0.7">
+          <ellipse cx="88" cy="70" rx="30" ry="18"
+                   transform="rotate(-24 88 70)" fill="#FFF7ED"/>
+        </g>
+        <ellipse cx="99" cy="61" rx="10" ry="5.2"
+                 transform="rotate(-24 99 61)" fill="#FFF7ED" opacity="0.9"/>
+        <g id="motas" fill="#FFF7ED" opacity="0.65">
+          <circle cx="163" cy="90" r="2.6"/><circle cx="63" cy="150" r="2.2"/><circle cx="150" cy="163" r="1.8"/>
+        </g>
+      </g>
+    </g>
+
+    <g id="cara" transform="translate(0, -2) translate(120, 124) rotate(0) scale(0.986, 1.021) translate(-120, -124)">
+      <g id="rubor" filter="url(#soft2)" fill="#C2410C" opacity="0.42">
+        <ellipse cx="76" cy="134" rx="13" ry="7.5" transform="translate(0, 0) translate(76, 134) rotate(0) scale(1, 1) translate(-76, -134)"/>
+        <ellipse cx="164" cy="134" rx="13" ry="7.5" transform="translate(0, 0) translate(164, 134) rotate(0) scale(1, 1) translate(-164, -134)"/>
+      </g>
+      <g id="ojos">
+      <g id="ojo-izq" transform="translate(94, 113)">
+        <g id="ojo-izq-mov" transform="translate(0, 0) scale(1.28, 1.3)">
+          <g id="ojo-izq-abierto" opacity="1" clip-path="url(#parpado-izq)">
+            <ellipse id="ojo-izq-globo" rx="12" ry="14" fill="#08505C"/>
+            <g id="ojo-izq-brillo" fill="#FFF7ED" opacity="1.25">
+              <circle cx="-4.2" cy="-5.6" r="4.4"/><circle cx="4.4" cy="5.2" r="2.2"/>
+            </g>
+          </g>
+          <path id="ojo-izq-arco" d="M -11 2 Q 0 -9 11 2" fill="none" stroke="#08505C"
+                stroke-width="4" stroke-linecap="round" opacity="0"/>
+        </g>
+      </g>
+      <g id="ojo-der" transform="translate(146, 113)">
+        <g id="ojo-der-mov" transform="translate(0, 0) scale(1.28, 1.3)">
+          <g id="ojo-der-abierto" opacity="1" clip-path="url(#parpado-der)">
+            <ellipse id="ojo-der-globo" rx="12" ry="14" fill="#08505C"/>
+            <g id="ojo-der-brillo" fill="#FFF7ED" opacity="1.25">
+              <circle cx="-4.2" cy="-5.6" r="4.4"/><circle cx="4.4" cy="5.2" r="2.2"/>
+            </g>
+          </g>
+          <path id="ojo-der-arco" d="M -11 2 Q 0 -9 11 2" fill="none" stroke="#08505C"
+                stroke-width="4" stroke-linecap="round" opacity="0"/>
+        </g>
+      </g>
+      </g>
+      <path id="boca" d="M 113.4 136 Q 114.5 135.808 115.6 135.681 Q 116.7 135.553 117.8 135.489 Q 118.9 135.425 120 135.425 Q 121.1 135.425 122.2 135.489 Q 123.3 135.553 124.4 135.681 Q 125.5 135.808 126.6 136 Q 120 149.15 113.4 136 Z" fill="#08505C" stroke="#08505C"
+            stroke-width="4.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <g id="chispas" opacity="1">
+      <path d="M0,-1 C0.14,-0.4 0.4,-0.14 1,0 C0.4,0.14 0.14,0.4 0,1 C-0.14,0.4 -0.4,0.14 -1,0 C-0.4,-0.14 -0.14,-0.4 0,-1 Z" fill="#C2410C" opacity="1" transform="translate(206 64) scale(12.6)"/>
+      <path d="M0,-1 C0.14,-0.4 0.4,-0.14 1,0 C0.4,0.14 0.14,0.4 0,1 C-0.14,0.4 -0.4,0.14 -1,0 C-0.4,-0.14 -0.14,-0.4 0,-1 Z" fill="#6FCBBB" opacity="1" transform="translate(32 82) scale(7.2)"/>
+      <path d="M0,-1 C0.14,-0.4 0.4,-0.14 1,0 C0.4,0.14 0.14,0.4 0,1 C-0.14,0.4 -0.4,0.14 -1,0 C-0.4,-0.14 -0.14,-0.4 0,-1 Z" fill="#C2410C" opacity="0.5" transform="translate(196 172) scale(6)"/>
+    </g>
+
+    <g id="fx-frente"></g>
+  </g>
+</svg>

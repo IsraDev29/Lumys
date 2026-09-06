@@ -1,0 +1,471 @@
+/* ==========================================================================
+   Lumys* — Inicio del estudiante
+   Sigue la pantalla "Inicio Estudiante · Mascota Lumy" de Stitch.
+   ========================================================================== */
+
+.lm-inicio { display: flex; flex-direction: column; gap: clamp(1.15rem, 2.4vw, 2rem); }
+
+/* --------------------------------------------------------------------------
+   Pastillas: la etiqueta redonda que Stitch usa por todas partes
+   -------------------------------------------------------------------------- */
+
+.lm-pastilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.32rem 0.8rem;
+  border-radius: var(--lm-radius-pill);
+  font-family: var(--lm-font-display);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.lm-pastilla--celeste { background: var(--lm-celeste-050); color: var(--lm-celeste-ink); }
+.lm-pastilla--privado { background: var(--lm-cream-deep); color: var(--lm-ink-soft); }
+.lm-pastilla--escucha { background: var(--lm-white); color: var(--lm-celeste-ink); box-shadow: var(--lm-shadow-sm); }
+.lm-pastilla--mini { background: var(--lm-cream-deep); color: var(--lm-ink-soft); font-size: 0.7rem; padding: 0.22rem 0.62rem; }
+
+.lm-eyebrow--lavanda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lm-lavanda-ink);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+/* Punto que late: "hay alguien escuchando". */
+.lm-punto-vivo {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--lm-celeste-ink);
+  animation: lm-latido-suave 2.2s var(--lm-ease) infinite;
+}
+.lm-punto-vivo--quieto { animation: none; background: var(--lm-celeste); flex: none; }
+
+/* --------------------------------------------------------------------------
+   1 · Saludo y racha
+   -------------------------------------------------------------------------- */
+
+.lm-saludo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lm-sp-4);
+}
+
+.lm-saludo__texto { flex: 1 1 320px; min-width: 0; }
+.lm-saludo__texto h1 { margin: var(--lm-sp-3) 0 var(--lm-sp-2); max-width: 18ch; }
+
+.lm-saludo__brillo { display: inline-block; animation: lm-brillo 2.8s var(--lm-ease) infinite; }
+@keyframes lm-brillo {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-5px) scale(1.12); }
+}
+
+.lm-saludo__frase {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--lm-ink-soft);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+/* --- Tarjeta de racha --- */
+.lm-racha {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-3) var(--lm-sp-4);
+  border-radius: var(--lm-radius-lg);
+  background: var(--lm-white);
+  border: 1px solid var(--lm-line);
+  box-shadow: var(--lm-shadow-sm);
+  flex: 0 1 auto;
+}
+
+.lm-racha__icono {
+  width: 48px; height: 48px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--lm-sol);
+  color: var(--lm-navy-900);
+  font-size: 1.4rem;
+  box-shadow: var(--lm-glow);
+}
+
+.lm-racha__info { min-width: 0; }
+.lm-racha__dias {
+  margin: 0;
+  font-family: var(--lm-font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--lm-navy-900);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.lm-racha__nivel { margin: 0; font-size: 0.76rem; color: var(--lm-ink-muted); }
+
+.lm-racha__semana { display: flex; gap: 4px; margin-left: var(--lm-sp-2); flex: none; }
+.lm-racha__punto {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--lm-line-strong);
+}
+.lm-racha__punto.is-hecho { background: var(--lm-sol); }
+.lm-racha__punto.is-hoy { animation: lm-latido-suave 2.2s var(--lm-ease) infinite; }
+
+@media (max-width: 560px) {
+  .lm-racha { width: 100%; }
+  .lm-racha__semana { margin-left: auto; }
+}
+
+/* --------------------------------------------------------------------------
+   2 · Hub de Lumy
+
+   El corazón de la pantalla. Fondo con tres manchas de luz muy desenfocadas —
+   son las que dan la sensación de que la mascota emite luz en vez de estar
+   pegada sobre un rectángulo.
+   -------------------------------------------------------------------------- */
+
+.lm-hub {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  padding: clamp(1.4rem, 3.5vw, 2.75rem);
+  border-radius: var(--lm-radius-xl);
+  background: linear-gradient(180deg, var(--lm-lavanda-050) 0%, var(--lm-white) 45%, var(--lm-celeste-050) 100%);
+  box-shadow: var(--lm-shadow-sm);
+}
+
+@media (min-width: 900px) {
+  .lm-hub { grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr); }
+}
+
+.lm-hub__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  /* Sin `will-change`: son estáticas. Marcarlas mantendría tres capas de
+     composición vivas para siempre a cambio de nada. */
+}
+.lm-hub__blob--1 { top: -14%; left: -12%; width: 280px; height: 280px; background: rgba(var(--lm-lavanda-rgb), 0.55); }
+.lm-hub__blob--2 { bottom: -18%; right: -10%; width: 320px; height: 320px; background: rgba(var(--lm-celeste-rgb), 0.5); }
+.lm-hub__blob--3 { top: 42%; left: 46%; width: 300px; height: 300px; background: rgba(var(--lm-sol-rgb), 0.3); }
+
+.lm-hub > *:not(.lm-hub__blob) { position: relative; z-index: 1; }
+
+/* --- Mascota --- */
+.lm-hub__mascota { display: flex; flex-direction: column; align-items: center; text-align: center; }
+
+.lm-burbuja {
+  position: relative;
+  max-width: 34ch;
+  margin-bottom: var(--lm-sp-4);
+  padding: var(--lm-sp-4) var(--lm-sp-5);
+  border-radius: var(--lm-radius-lg);
+  background: var(--lm-white);
+  box-shadow: var(--lm-shadow);
+}
+.lm-burbuja p {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--lm-ink);
+  font-weight: 500;
+}
+/* La colita del bocadillo. Triángulo con bordes, que es más barato que rotar
+   un cuadrado y no se ve dentado al escalar. */
+.lm-burbuja::after {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid var(--lm-white);
+}
+
+.lm-hub__lumy {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--lm-sp-3);
+}
+
+/* Halo que respira detrás de la mascota. */
+.lm-hub__halo {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%,
+    rgba(var(--lm-lavanda-rgb), 0.6),
+    rgba(var(--lm-celeste-rgb), 0.45) 55%,
+    transparent 72%);
+  filter: blur(18px);
+  animation: lm-respirar 8s var(--lm-ease) infinite;
+  will-change: transform, opacity;
+}
+
+.lm-hub__lumy .lm-lumy,
+.lm-hub__lumy svg { position: relative; z-index: 1; }
+
+.lm-hub__mascota .lm-pastilla--escucha { margin-top: var(--lm-sp-3); }
+
+/* --- Accesos rápidos --- */
+.lm-hub__acciones h2 { margin: var(--lm-sp-2) 0 var(--lm-sp-2); }
+.lm-hub__sub { margin: 0 0 var(--lm-sp-4); color: var(--lm-ink-soft); font-size: 0.94rem; }
+
+.lm-accesos { display: flex; flex-direction: column; gap: var(--lm-sp-2); }
+
+.lm-acceso {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-3);
+  border-radius: var(--lm-radius-lg);
+  background: var(--lm-white);
+  border: 1px solid var(--lm-line);
+  box-shadow: var(--lm-shadow-sm);
+  color: inherit;
+  transition: transform var(--lm-dur) var(--lm-ease), box-shadow var(--lm-dur) var(--lm-ease);
+}
+.lm-acceso:hover { transform: translateY(-2px); box-shadow: var(--lm-shadow); color: inherit; }
+
+.lm-acceso__icono {
+  width: 42px; height: 42px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--lm-radius-sm);
+  font-size: 1.15rem;
+  transition: transform var(--lm-dur) var(--lm-ease-suave);
+}
+.lm-acceso:hover .lm-acceso__icono { transform: scale(1.1) rotate(-5deg); }
+
+.lm-acceso__icono--celeste { background: var(--lm-celeste-100); color: var(--lm-celeste-ink); }
+.lm-acceso__icono--sol     { background: var(--lm-sol-100);     color: var(--lm-sol-ink); }
+.lm-acceso__icono--lavanda { background: var(--lm-lavanda-100); color: var(--lm-lavanda-ink); }
+
+.lm-acceso__texto { display: flex; flex-direction: column; min-width: 0; }
+.lm-acceso__titulo { font-family: var(--lm-font-display); font-weight: 500; color: var(--lm-navy-900); line-height: 1.25; }
+.lm-acceso__pie { font-size: 0.8rem; color: var(--lm-ink-muted); }
+.lm-acceso__flecha { margin-left: auto; color: var(--lm-ink-muted); flex: none; }
+
+/* --------------------------------------------------------------------------
+   3 · Check-in rápido
+   -------------------------------------------------------------------------- */
+
+.lm-etiqueta-campo {
+  margin: var(--lm-sp-5) 0 var(--lm-sp-3);
+  font-family: var(--lm-font-display);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--lm-navy-900);
+}
+.lm-etiqueta-campo--fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--lm-sp-2);
+}
+
+/* --- Selector de ánimo ---
+   Columnas explícitas y no `auto-fit`: con `minmax(132px, 1fr)` la rejilla cae
+   a una sola columna en cuanto el contenedor baja de 272 px, y dentro de una
+   tarjeta en un teléfono de 360 px quedan 265 px útiles. Se perdía por siete
+   píxeles y los cinco ánimos se apilaban en una tira vertical.
+   Dos columnas en teléfono, tres en tableta y los cinco en fila en escritorio,
+   igual que la maqueta. */
+.lm-animos {
+  display: grid;
+  gap: var(--lm-sp-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 600px) { .lm-animos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .lm-animos { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+.lm-animo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--lm-sp-4) var(--lm-sp-2);
+  border: 2px solid var(--lm-line);
+  border-radius: var(--lm-radius-lg);
+  background: var(--lm-white);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--lm-dur) var(--lm-ease),
+    background var(--lm-dur) var(--lm-ease),
+    transform var(--lm-dur-fast) var(--lm-ease);
+}
+.lm-animo:hover { transform: translateY(-3px); border-color: var(--lm-lavanda-300); }
+.lm-animo:active { transform: scale(0.97); }
+
+.lm-animo__emoji { font-size: 1.85rem; line-height: 1.1; transition: transform var(--lm-dur) var(--lm-ease-suave); }
+.lm-animo:hover .lm-animo__emoji { transform: scale(1.2); }
+
+.lm-animo__nombre { font-family: var(--lm-font-display); font-weight: 500; font-size: 0.92rem; color: var(--lm-navy-900); }
+.lm-animo__pie { font-size: 0.74rem; color: var(--lm-ink-muted); line-height: 1.3; }
+
+/* Elegido: cada ánimo se tiñe de su propio color. Es la única parte de la
+   interfaz donde el color codifica emoción, y funciona porque va acompañado
+   siempre del emoji y de la palabra — nunca es el color el único portador. */
+.lm-animo.is-elegido { border-color: var(--lm-navy); box-shadow: var(--lm-shadow-sm); }
+.lm-animo--sol.is-elegido     { background: var(--lm-sol-050); }
+.lm-animo--celeste.is-elegido { background: var(--lm-celeste-050); }
+.lm-animo--lavanda.is-elegido { background: var(--lm-lavanda-050); }
+.lm-animo--neutro.is-elegido  { background: var(--lm-cream-deep); }
+.lm-animo--lluvia.is-elegido  { background: #eef1f8; }
+
+/* --- Etiquetas de contexto --- */
+.lm-influye { display: flex; flex-wrap: wrap; gap: var(--lm-sp-2); }
+
+.lm-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.95rem;
+  min-height: 40px;
+  border-radius: var(--lm-radius-pill);
+  border: 1.5px solid var(--lm-line);
+  background: var(--lm-white);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--lm-ink-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all var(--lm-dur) var(--lm-ease);
+}
+.lm-tag i { color: var(--lm-celeste-ink); }
+.lm-tag:hover { border-color: var(--lm-lavanda-300); color: var(--lm-navy-900); }
+.lm-tag.is-elegido {
+  background: var(--lm-lavanda-100);
+  border-color: var(--lm-lavanda-ink);
+  color: var(--lm-lavanda-600);
+  font-weight: 600;
+}
+.lm-tag.is-elegido i { color: var(--lm-lavanda-600); }
+
+/* --- Campo de diario --- */
+.lm-input-group__icono {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--lm-lavanda-ink);
+  pointer-events: none;
+}
+
+.lm-checkin-rapido__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lm-sp-3);
+  margin-top: var(--lm-sp-5);
+}
+.lm-checkin-rapido__pie .lm-caption { max-width: 44ch; }
+.lm-checkin-rapido__pie i { color: var(--lm-celeste-ink); }
+
+@media (max-width: 620px) {
+  .lm-checkin-rapido__pie .lm-btn { width: 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   4 · Rejilla de bienestar (bento)
+   -------------------------------------------------------------------------- */
+
+.lm-bento {
+  display: grid;
+  gap: clamp(0.85rem, 1.8vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+}
+
+.lm-bento__card {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.1rem, 2.2vw, 1.5rem);
+  border-radius: var(--lm-radius-lg);
+  background: var(--lm-white);
+  border: 1px solid var(--lm-line);
+  box-shadow: var(--lm-shadow-sm);
+  transition: transform var(--lm-dur) var(--lm-ease), box-shadow var(--lm-dur) var(--lm-ease);
+}
+.lm-bento__card:hover { transform: translateY(-3px); box-shadow: var(--lm-shadow); }
+
+.lm-bento__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lm-sp-2);
+  margin-bottom: var(--lm-sp-3);
+}
+
+.lm-bento__icono {
+  width: 42px; height: 42px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--lm-radius-sm);
+  font-size: 1.2rem;
+}
+.lm-bento__icono--celeste { background: var(--lm-celeste-100); color: var(--lm-celeste-ink); }
+.lm-bento__icono--sol     { background: var(--lm-sol-100);     color: var(--lm-sol-ink); }
+.lm-bento__icono--lavanda { background: var(--lm-lavanda-100); color: var(--lm-lavanda-ink); }
+
+.lm-bento__card h3 { margin: 0 0 4px; font-size: 1.08rem; font-weight: 600; }
+.lm-bento__card > p { margin: 0 0 var(--lm-sp-4); font-size: 0.88rem; color: var(--lm-ink-soft); line-height: 1.5; }
+
+.lm-bento__demo { display: grid; place-items: center; padding: var(--lm-sp-4) 0; margin-top: auto; }
+.lm-bento__grafico { margin: 0 0 var(--lm-sp-3); }
+.lm-bento__lista { display: flex; flex-direction: column; gap: var(--lm-sp-2); margin-bottom: var(--lm-sp-4); }
+
+/* Orbe de respiración en miniatura: la misma idea del /respirar, a escala de
+   tarjeta. Late al ritmo de la guía real (4 s dentro, 4 s fuera). */
+.lm-orbe-mini {
+  width: 96px; height: 96px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, var(--lm-celeste-100), var(--lm-celeste) 45%, var(--lm-lavanda) 100%);
+  font-family: var(--lm-font-display);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--lm-navy-900);
+  box-shadow: 0 0 26px rgba(var(--lm-celeste-rgb), 0.7);
+  animation: lm-respirar-orbe 8s var(--lm-ease) infinite;
+  will-change: transform;
+}
+@keyframes lm-respirar-orbe {
+  0%, 100% { transform: scale(0.86); }
+  50%      { transform: scale(1.06); }
+}
+
+.lm-mini-contacto {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-2);
+  padding: var(--lm-sp-2);
+  border-radius: var(--lm-radius);
+  background: var(--lm-cream);
+}
+.lm-mini-contacto__texto { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.lm-mini-contacto__nombre {
+  font-family: var(--lm-font-display);
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--lm-navy-900);
+  line-height: 1.25;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lm-mini-contacto__rel { font-size: 0.74rem; color: var(--lm-ink-muted); }
+.lm-mini-contacto .lm-avatar { width: 34px; height: 34px; font-size: 0.76rem; }

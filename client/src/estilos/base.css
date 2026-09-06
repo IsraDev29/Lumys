@@ -1,0 +1,562 @@
+/* ==========================================================================
+   Lumys* — Base: tipografía, layout del shell y navegación responsiva
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--lm-font-body);
+  font-size: var(--lm-fs-body);
+  line-height: 1.6;
+  color: var(--lm-ink);
+  background-color: var(--lm-cream);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Textura de fondo: tres focos de luz con los colores del isotipo. Son manchas
+   muy abiertas y muy diluidas — no se leen como un degradado, se leen como que
+   la pantalla está iluminada desde algún sitio. Van en `position: fixed` para
+   que no se desplacen con el scroll y el fondo se quede quieto. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(880px 560px at 8% -10%, rgba(var(--lm-lavanda-rgb), 0.5), transparent 62%),
+    radial-gradient(720px 480px at 102% 2%, rgba(var(--lm-celeste-rgb), 0.42), transparent 60%),
+    radial-gradient(620px 420px at 78% 102%, rgba(var(--lm-sol-rgb), 0.24), transparent 62%);
+}
+
+/* --- Tipografía ---------------------------------------------------------- */
+h1, h2, h3, h4, h5, .lm-display {
+  font-family: var(--lm-font-display);
+  color: var(--lm-navy-900);
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--lm-sp-3);
+}
+
+/* Fredoka es ancha y de trazo alto: a peso 700 en un titular grande se vuelve
+   pesada. 600 le da la contundencia sin el bloque. */
+h1 { font-size: var(--lm-fs-h1); font-weight: 600; line-height: 1.08; }
+h2 { font-size: var(--lm-fs-h2); font-weight: 600; line-height: 1.18; }
+h3 { font-size: var(--lm-fs-h3); font-weight: 500; }
+
+p { margin: 0 0 var(--lm-sp-4); }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--lm-teal); text-decoration: none; transition: color var(--lm-dur-fast) var(--lm-ease); }
+a:hover { color: var(--lm-emerald); }
+
+strong, b { font-weight: 600; }
+
+.lm-eyebrow {
+  font-family: var(--lm-font-body);
+  font-size: var(--lm-fs-caption);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lm-ink-muted);
+  margin: 0 0 var(--lm-sp-2);
+}
+
+.lm-caption {
+  font-size: var(--lm-fs-caption);
+  font-weight: 500;
+  color: var(--lm-ink-muted);
+  line-height: 1.45;
+}
+
+.lm-lead { font-size: 1.075rem; color: var(--lm-ink-soft); }
+.lm-muted { color: var(--lm-ink-soft); }
+
+/* El asterisco de marca. Va en Sol, pero en la variante tinta: el amarillo puro
+   del isotipo es un glifo pequeño sobre fondo claro y desaparece. Sobre navy —
+   barra lateral, pie— sí se usa el Sol pleno, que es donde luce. */
+.lm-ast { color: var(--lm-sol-ink); font-weight: 600; }
+.lm-sidebar .lm-ast,
+.lm-footer .lm-ast,
+.lm-card--emerald .lm-ast { color: var(--lm-sol); }
+
+/* --- Accesibilidad ------------------------------------------------------- */
+:focus-visible {
+  outline: 3px solid var(--lm-teal-300);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.lm-skip {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 2000;
+  background: var(--lm-emerald);
+  color: var(--lm-cream);
+  padding: var(--lm-sp-3) var(--lm-sp-4);
+  border-radius: 0 0 var(--lm-radius-sm) 0;
+}
+.lm-skip:focus { left: 0; color: var(--lm-cream); }
+
+.visually-hidden-focusable:not(:focus):not(:focus-within) { position: absolute; left: -999px; }
+
+/* ==========================================================================
+   Shell de la aplicación
+   ========================================================================== */
+
+.lm-app {
+  display: grid;
+  grid-template-columns: var(--lm-sidebar-w) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.lm-app[hidden] { display: none; }
+
+/* --- Barra lateral (escritorio) ------------------------------------------ */
+.lm-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lm-sp-4);
+  padding: var(--lm-sp-5) var(--lm-sp-4);
+  background: var(--lm-degradado-navy);
+  color: rgba(var(--lm-cream-rgb), 0.82);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.lm-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: 0 var(--lm-sp-2) var(--lm-sp-4);
+  border-bottom: 1px solid rgba(var(--lm-cream-rgb), 0.16);
+}
+
+.lm-sidebar__brand img { width: 40px; height: 40px; flex: none; }
+
+/* Los dos son <span> dentro de otro <span>: sin `display: block` quedan en la
+   misma línea y el descriptor se pega al asterisco del logotipo. */
+.lm-sidebar__brand-name {
+  display: block;
+  font-family: var(--lm-font-display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+  color: var(--lm-cream);
+  line-height: 1;
+}
+
+.lm-sidebar__brand-tag {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: rgba(var(--lm-cream-rgb), 0.55);
+}
+
+.lm-nav-group + .lm-nav-group { margin-top: var(--lm-sp-4); }
+
+.lm-nav-group__title {
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--lm-cream-rgb), 0.45);
+  padding: 0 var(--lm-sp-3) var(--lm-sp-2);
+  margin: 0;
+}
+
+.lm-nav { display: flex; flex-direction: column; gap: 2px; }
+
+.lm-nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: 0.68rem var(--lm-sp-3);
+  border-radius: var(--lm-radius-pill);
+  color: rgba(var(--lm-cream-rgb), 0.78);
+  font-family: var(--lm-font-display);
+  font-size: 0.95rem;
+  font-weight: 400;
+  /* No se anima `background` sino la opacidad de una capa: el fondo del enlace
+     se queda quieto y el navegador solo compone. */
+  transition: color var(--lm-dur) var(--lm-ease), transform var(--lm-dur-fast) var(--lm-ease);
+}
+
+.lm-nav__link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(var(--lm-cream-rgb), 0.1);
+  opacity: 0;
+  transition: opacity var(--lm-dur) var(--lm-ease);
+}
+
+.lm-nav__link > * { position: relative; }
+.lm-nav__link i { font-size: 1.15rem; opacity: 0.85; }
+
+.lm-nav__link:hover { color: var(--lm-cream); }
+.lm-nav__link:hover::before { opacity: 1; }
+.lm-nav__link:active { transform: scale(0.98); }
+
+/* Píldora activa: el degradado del isotipo, con el navy del logotipo encima.
+   Es el mismo recorrido lavanda → sol → celeste que el trazo de la marca. */
+.lm-nav__link.is-active {
+  color: var(--lm-navy-900);
+  font-weight: 500;
+}
+.lm-nav__link.is-active::before {
+  opacity: 1;
+  background: var(--lm-degradado-marca);
+  box-shadow: var(--lm-shadow-sm);
+}
+.lm-nav__link.is-active i { opacity: 1; color: var(--lm-navy-900); }
+
+.lm-nav__badge {
+  position: relative;
+  margin-left: auto;
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-sol);
+  color: var(--lm-navy-900);
+  font-family: var(--lm-font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 20px;
+}
+
+.lm-sidebar__footer { margin-top: auto; padding-top: var(--lm-sp-4); }
+
+.lm-sidebar__card {
+  border-radius: var(--lm-radius);
+  background: rgba(var(--lm-cream-rgb), 0.09);
+  border: 1px solid rgba(var(--lm-cream-rgb), 0.14);
+  padding: var(--lm-sp-4);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.lm-sidebar__card strong { color: var(--lm-cream); display: block; margin-bottom: 6px; }
+
+/* Los teléfonos de emergencia son enlaces `tel:` de verdad: en un móvil marcan
+   directo, que es el único momento en que esta tarjeta importa. */
+.lm-sidebar__linea {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-2);
+  margin-bottom: 3px;
+}
+.lm-sidebar__linea i { color: var(--lm-sol); font-size: 0.9rem; flex: none; }
+.lm-sidebar__linea a {
+  color: var(--lm-cream);
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+.lm-sidebar__linea a:hover { color: var(--lm-sol); text-decoration: underline; }
+
+.lm-sidebar__nota {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(var(--lm-cream-rgb), 0.6);
+}
+
+/* --- Área principal ------------------------------------------------------ */
+.lm-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lm-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  min-height: var(--lm-topbar-h);
+  padding: var(--lm-sp-3) clamp(1rem, 3vw, 2rem);
+  background: rgba(var(--lm-cream-rgb), 0.86);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--lm-line);
+}
+
+.lm-topbar__title {
+  font-family: var(--lm-font-display);
+  font-weight: 600;
+  font-size: 1.18rem;
+  letter-spacing: -0.02em;
+  color: var(--lm-navy-900);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.lm-topbar__sub { font-size: 0.76rem; color: var(--lm-ink-muted); }
+
+.lm-topbar__actions { margin-left: auto; display: flex; align-items: center; gap: var(--lm-sp-2); }
+
+.lm-icon-btn {
+  width: 42px; height: 42px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--lm-line);
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-white);
+  color: var(--lm-navy);
+  font-size: 1.05rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--lm-dur) var(--lm-ease),
+    color var(--lm-dur) var(--lm-ease),
+    border-color var(--lm-dur) var(--lm-ease),
+    transform var(--lm-dur-fast) var(--lm-ease);
+}
+.lm-icon-btn:hover {
+  background: var(--lm-lavanda-050);
+  color: var(--lm-lavanda-ink);
+  border-color: var(--lm-lavanda-100);
+}
+.lm-icon-btn:active { transform: scale(0.94); }
+
+.lm-icon-btn--dot { position: relative; }
+.lm-icon-btn--dot::after {
+  content: "";
+  position: absolute; top: 8px; right: 9px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--lm-sol);
+  box-shadow: 0 0 0 2px var(--lm-white);
+}
+
+.lm-view {
+  flex: 1;
+  padding: clamp(1.15rem, 2.6vw, 2.25rem) clamp(1rem, 3vw, 2rem);
+  padding-bottom: calc(var(--lm-bottomnav-h) + 2rem);
+  max-width: calc(var(--lm-container) + 4rem);
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 992px) {
+  .lm-view { padding-bottom: clamp(2rem, 4vw, 3rem); }
+}
+
+/* Transición al cambiar de vista. La dispara la `key` del contenedor en
+   Cascaron.tsx; acá solo se declara el gesto: un desplazamiento corto hacia
+   arriba mientras aparece. Corto a propósito — es una confirmación de que se
+   navegó, no una animación que haya que esperar. */
+.lm-view__inner {
+  animation: lm-subir var(--lm-dur-slow) var(--lm-ease) both;
+}
+
+/* --- Encabezado de vista ------------------------------------------------- */
+.lm-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--lm-sp-4);
+  margin-bottom: var(--lm-sp-5);
+}
+.lm-page-head__text { min-width: 0; flex: 1 1 320px; }
+.lm-page-head h1 { margin-bottom: var(--lm-sp-2); }
+.lm-page-head p { color: var(--lm-ink-soft); margin: 0; max-width: 62ch; }
+
+/* --- Navegación inferior --------------------------------------------------
+   Píldora flotante al alcance del pulgar. El fondo es navy translúcido con
+   desenfoque: el contenido que pasa por debajo se insinúa, lo que da la
+   sensación de que la barra está por encima de la página y no pegada al borde.
+
+   Se separa del borde inferior (`bottom`) en vez de ocupar todo el ancho para
+   no chocar con el gesto de "volver al inicio" de iOS y Android.
+   ------------------------------------------------------------------------- */
+.lm-bottomnav {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  padding: 7px;
+  width: min(460px, calc(100vw - 24px));
+  border-radius: var(--lm-radius-pill);
+  background: rgba(var(--lm-navy-rgb), 0.93);
+  border: 1px solid rgba(var(--lm-cream-rgb), 0.12);
+  box-shadow: var(--lm-shadow-lg);
+  /* `translateX` va acá y no en una regla aparte: la barra no se anima nunca,
+     así que el centrado puede vivir en el transform sin estorbar a nadie. */
+  transform: translateX(-50%);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .lm-bottomnav {
+    background: rgba(var(--lm-navy-rgb), 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+  }
+}
+
+/* El indicador que se desliza. Su posición y ancho los mide BarraInferior.tsx
+   y llegan como estilos en línea; acá solo se declara cómo se mueve.
+
+   Arranca sin la clase `is-listo`: hasta que no hay medición no se pinta, así
+   no se ve un fotograma con el indicador en el origen antes de saltar a su
+   sitio. La primera colocación tampoco se anima, por lo mismo. */
+.lm-bottomnav__indicador {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  height: calc(100% - 14px);
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-degradado-marca);
+  box-shadow: 0 4px 14px rgba(var(--lm-lavanda-rgb), 0.4);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.lm-bottomnav__indicador.is-listo {
+  opacity: 1;
+  transition:
+    transform var(--lm-dur) var(--lm-ease-suave),
+    width var(--lm-dur) var(--lm-ease-suave),
+    opacity var(--lm-dur-fast) var(--lm-ease);
+}
+
+.lm-bottomnav__link {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 7px 2px;
+  border-radius: var(--lm-radius-pill);
+  color: rgba(var(--lm-cream-rgb), 0.62);
+  font-family: var(--lm-font-display);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1;
+  transition: color var(--lm-dur) var(--lm-ease);
+}
+
+.lm-bottomnav__icono { position: relative; display: block; font-size: 1.2rem; line-height: 1; }
+.lm-bottomnav__icono i { display: block; }
+
+.lm-bottomnav__texto {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* El texto activo va a navy sobre el degradado claro del indicador. */
+.lm-bottomnav__link.is-active { color: var(--lm-navy-900); font-weight: 600; }
+.lm-bottomnav__link:hover { color: rgba(var(--lm-cream-rgb), 0.9); }
+.lm-bottomnav__link.is-active:hover { color: var(--lm-navy-900); }
+
+/* Punto de "tenés algo pendiente". Late despacio: es un recordatorio, no una
+   alarma — y en esta app la diferencia entre las dos cosas importa. */
+.lm-bottomnav__punto {
+  position: absolute;
+  top: -1px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lm-sol);
+  box-shadow: 0 0 0 2px var(--lm-navy);
+  animation: lm-latido-suave 2.6s var(--lm-ease) infinite;
+}
+
+@keyframes lm-latido-suave {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.28); opacity: 0.75; }
+}
+
+.lm-bottomnav__badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-sol);
+  color: var(--lm-navy-900);
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--lm-navy);
+}
+
+/* En escritorio manda la barra lateral: repetir la navegación abajo sería
+   redundante y taparía contenido. */
+@media (min-width: 992px) {
+  .lm-bottomnav { display: none; }
+}
+
+@media (max-width: 991.98px) {
+  .lm-app { grid-template-columns: minmax(0, 1fr); }
+  .lm-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(300px, 84vw);
+    z-index: 100;
+    transform: translateX(-102%);
+    transition: transform var(--lm-dur) var(--lm-ease);
+    box-shadow: var(--lm-shadow-lg);
+  }
+  .lm-sidebar.is-open { transform: none; }
+  .lm-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(var(--lm-emerald-900-rgb), 0.42);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--lm-dur) var(--lm-ease);
+  }
+  .lm-scrim.is-open { opacity: 1; pointer-events: auto; }
+}
+
+@media (min-width: 992px) {
+  .lm-scrim { display: none; }
+  .lm-burger { display: none !important; }
+}
+
+/* --- Utilidades ---------------------------------------------------------- */
+.lm-stack > * + * { margin-top: var(--lm-sp-4); }
+.lm-stack-sm > * + * { margin-top: var(--lm-sp-2); }
+.lm-grid { display: grid; gap: clamp(0.85rem, 1.6vw, 1.25rem); }
+.lm-grid--2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.lm-grid--3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.lm-grid--4 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+/* Para pares de tarjetas dentro de columnas angostas (paneles, formularios) */
+.lm-grid--compact { grid-template-columns: repeat(auto-fit, minmax(min(100%, 155px), 1fr)); }
+
+.lm-divider { height: 1px; background: var(--lm-line); border: 0; margin: var(--lm-sp-5) 0; }
+
+/* El corte de movimiento por `prefers-reduced-motion` vive en movimiento.css,
+   que es donde se declara todo lo que se mueve. Tenerlo también acá duplicaba
+   la regla y dejaba dos sitios donde tocarla. */

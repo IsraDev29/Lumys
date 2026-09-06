@@ -1,0 +1,50 @@
+{
+  "name": "Lumys* · Conecta · Comprende · Crece",
+  "short_name": "Lumys*",
+  "description": "Acompañamiento emocional en centros educativos de Nicaragua. Funciona sin conexión: el check-in se guarda en el teléfono y se sincroniza cuando vuelve la señal.",
+  "lang": "es-NI",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F6FD",
+  "theme_color": "#152B63",
+  "categories": ["health", "education", "lifestyle"],
+  "icons": [
+    {
+      "src": "img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Hacer mi check-in",
+      "short_name": "Check-in",
+      "description": "Registrar cómo venís hoy",
+      "url": "/checkin",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Respirar",
+      "short_name": "Respirar",
+      "description": "Un minuto para bajar revoluciones",
+      "url": "/respirar",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

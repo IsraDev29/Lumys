@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Lumys* — Tokens de diseño
+   Fuente: identidad de marca 2026 (isotipo iridiscente + logotipo Lumys)
+
+   Paleta oficial:
+     #AEE0F6  Celeste   · calma, respiración, estados pasivos
+     #CDB2FF  Lavanda   · introspección, acción principal, la marca
+     #FFD77A  Sol       · logros, rachas, micro-afirmaciones, el asterisco
+     #152b63  Navy      · texto, superficies profundas, navegación
+
+   Regla de proporción: 60% lienzo claro · 30% lavanda/celeste · 10% sol.
+
+   ── Sobre los nombres heredados ──────────────────────────────────────────
+   Las vistas usan `--lm-emerald`, `--lm-teal` y `--lm-terracotta` en unos 850
+   lugares. Esos nombres describían el color de la paleta anterior, no su papel
+   en la interfaz. En vez de renombrarlos vista por vista —y arriesgar que se
+   escape uno— se conservan como ALIAS al final del archivo, apuntando al rol
+   que siempre ocuparon:
+
+     --lm-emerald     → superficie profunda / CTA      → Navy
+     --lm-teal        → interactivo, enlaces, foco     → Lavanda tinta
+     --lm-terracotta  → acento cálido, logros          → Sol tinta
+     --lm-cream       → lienzo claro / texto sobre navy
+
+   Los nombres nuevos (`--lm-navy`, `--lm-lavanda`…) son los que hay que usar
+   de aquí en adelante. Los viejos quedan hasta que no queden usos.
+
+   ── Sobre los tokens `-rgb` ───────────────────────────────────────────────
+   Los `rgba(...)` literales que había repartidos por las hojas anclaban la
+   paleta vieja en sitios que ningún cambio de token alcanzaba. Ahora esos
+   valores se escriben `rgba(var(--lm-navy-rgb), .5)`: la opacidad sigue siendo
+   libre en el punto de uso, pero el tono viaja con el tema.
+   ========================================================================== */
+
+:root {
+  /* --- Paleta de marca ---------------------------------------------------- */
+  --lm-celeste: #aee0f6;
+  --lm-lavanda: #cdb2ff;
+  --lm-sol: #ffd77a;
+  --lm-navy: #152b63;
+
+  --lm-celeste-rgb: 174, 224, 246;
+  --lm-lavanda-rgb: 205, 178, 255;
+  --lm-sol-rgb: 255, 215, 122;
+  --lm-navy-rgb: 21, 43, 99;
+
+  /* --- Versiones "tinta" -------------------------------------------------
+     Los tres colores de marca son pasteles: preciosos como relleno, ilegibles
+     como texto. Cada uno tiene una variante oscurecida que conserva el tono y
+     pasa AA (≥4.5:1) sobre el lienzo claro. La regla es simple: pastel para
+     fondos, tinta para texto e iconos.                                      */
+  --lm-lavanda-ink: #6c4bc1;   /* 7.1:1 sobre blanco */
+  --lm-celeste-ink: #1f6d95;   /* 4.9:1 sobre blanco */
+  --lm-sol-ink: #9a6503;       /* 5.0:1 sobre blanco */
+
+  --lm-lavanda-ink-rgb: 108, 75, 193;
+  --lm-celeste-ink-rgb: 31, 109, 149;
+  --lm-sol-ink-rgb: 154, 101, 3;
+
+  /* --- Escalas ------------------------------------------------------------ */
+  --lm-navy-900: #0c1a3e;   /* titulares, pie de página */
+  --lm-navy-700: #1e3c7d;
+  --lm-navy-500: #2f549c;
+
+  --lm-lavanda-600: #5a3aab;
+  --lm-lavanda-300: #b49bea;
+  --lm-lavanda-100: #e4d9fb;
+  --lm-lavanda-050: #f2ecfe;
+
+  --lm-celeste-300: #7cc6e8;
+  --lm-celeste-100: #d9eefa;
+  --lm-celeste-050: #eef8fd;
+
+  --lm-sol-600: #b0740a;
+  --lm-sol-100: #ffeec4;
+  --lm-sol-050: #fff8e8;
+
+  /* --- Lienzo y superficies ----------------------------------------------
+     El fondo no es blanco puro: un blanco teñido de lavanda descansa la vista
+     en sesiones largas y hace que las tarjetas blancas floten sin sombra dura. */
+  --lm-cream: #f7f6fd;         /* lienzo base                                */
+  --lm-cream-soft: #fcfbff;    /* tarjeta cálida, apenas separada del blanco  */
+  --lm-cream-deep: #ece9f9;    /* superficie hundida: segmentos, notas        */
+  --lm-white: #ffffff;
+  --lm-cream-rgb: 247, 246, 253;
+
+  /* --- Neutros ------------------------------------------------------------ */
+  --lm-ink: #1f2748;          /* texto principal                             */
+  --lm-ink-soft: #545c7e;     /* texto secundario                            */
+  /* Captions y metadatos. El gris-azulado más claro que se probó (#838AA6) se
+     veía mejor pero daba 3.2:1 sobre el lienzo: por debajo de AA para texto
+     pequeño, y las captions son justamente el tamaño más pequeño que usa la
+     interfaz. Este valor pasa AA sobre las tres superficies donde aparece
+     —lienzo, blanco y hundido— y sigue leyéndose como secundario frente a
+     `--lm-ink-soft`.                                                        */
+  --lm-ink-muted: #5f6684;    /* captions, metadatos                         */
+  --lm-line: #e7e3f5;         /* bordes sobre el lienzo                      */
+  --lm-line-strong: #d3ccec;
+  --lm-ink-rgb: 31, 39, 72;
+
+  /* --- Semánticos del producto -------------------------------------------
+     Los niveles NO son diagnósticos: describen la respuesta del sistema.    */
+  --lm-nivel-1: #1f6d95;   /* Conversar  */
+  --lm-nivel-2: #9a6503;   /* Acompañar  */
+  --lm-nivel-3: #c0392b;   /* Derivar    */
+  --lm-nivel-1-bg: #e6f4fb;
+  --lm-nivel-2-bg: #fff3d6;
+  --lm-nivel-3-bg: #fbe6e3;
+
+  /* Clima emocional del gemelo digital (nunca un puntaje, un clima) */
+  --lm-clima-despejado: #ffc94d;
+  --lm-clima-parcial: #a9c9ea;
+  --lm-clima-nublado: #9098b8;
+  --lm-clima-lluvia: #6b76a3;
+
+  /* --- Degradados de marca ------------------------------------------------
+     El isotipo recorre lavanda → sol → celeste. Ese mismo recorrido es el que
+     usan el trazo del logo, la píldora activa de la barra inferior y los
+     bordes iluminados. Se declara una sola vez para que no se dibuje "a ojo"
+     en cada componente.                                                     */
+  --lm-degradado-marca: linear-gradient(135deg, #cdb2ff 0%, #f0b9d8 34%, #ffd77a 62%, #aee0f6 100%);
+  --lm-degradado-calma: linear-gradient(135deg, #aee0f6 0%, #cdb2ff 100%);
+  --lm-degradado-sol: linear-gradient(135deg, #ffd77a 0%, #f6b8a0 100%);
+  --lm-degradado-navy: linear-gradient(160deg, #1e3c7d 0%, #152b63 55%, #0c1a3e 100%);
+
+  /* --- Tipografía ---------------------------------------------------------
+     Fredoka es una geométrica de terminaciones redondeadas: comparte la
+     morfología del isotipo y lee como algo hecho para adolescentes, no como un
+     portal administrativo. Se reserva a titulares, botones y navegación —en
+     bloques largos cansa.
+     Plus Jakarta Sans sostiene el cuerpo: humanista, ancha, con altura de x
+     generosa; aguanta párrafos leídos en un mal momento.                    */
+  --lm-font-display: "Fredoka", "Quicksand", "Trebuchet MS", system-ui, sans-serif;
+  --lm-font-body: "Plus Jakarta Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Escala fluida: sin saltos bruscos entre teléfono y escritorio. */
+  --lm-fs-h1: clamp(1.85rem, 1.2rem + 2.6vw, 3rem);
+  --lm-fs-h2: clamp(1.3rem, 1.05rem + 1.05vw, 1.8rem);
+  --lm-fs-h3: clamp(1.08rem, 0.99rem + 0.45vw, 1.3rem);
+  --lm-fs-body: 1rem;
+  --lm-fs-sm: 0.9rem;
+  --lm-fs-caption: 0.78rem;
+
+  /* --- Espaciado (escala de 4) -------------------------------------------- */
+  --lm-sp-1: 0.25rem;
+  --lm-sp-2: 0.5rem;
+  --lm-sp-3: 0.75rem;
+  --lm-sp-4: 1rem;
+  --lm-sp-5: 1.5rem;
+  --lm-sp-6: 2rem;
+  --lm-sp-7: 3rem;
+  --lm-sp-8: 4rem;
+
+  /* --- Radios: formas mullidas, del mismo aire que la mascota ------------- */
+  --lm-radius-sm: 12px;
+  --lm-radius: 18px;
+  --lm-radius-lg: 26px;
+  --lm-radius-xl: 34px;
+  --lm-radius-pill: 999px;
+
+  /* --- Sombras -----------------------------------------------------------
+     Nunca gris neutro: la sombra lleva el tono del color que la proyecta, así
+     que las tarjetas parecen iluminadas y no recortadas sobre el fondo.     */
+  --lm-shadow-sm: 0 2px 10px rgba(var(--lm-lavanda-ink-rgb), 0.07);
+  --lm-shadow: 0 8px 24px -4px rgba(var(--lm-lavanda-ink-rgb), 0.14);
+  --lm-shadow-lg: 0 20px 46px -10px rgba(var(--lm-navy-rgb), 0.28);
+  --lm-shadow-warm: 0 10px 26px -4px rgba(var(--lm-sol-rgb), 0.6);
+  --lm-glow: 0 0 32px rgba(var(--lm-sol-rgb), 0.38);
+
+  /* --- Movimiento ---------------------------------------------------------
+     `--lm-ease` es la curva de reposo. `--lm-ease-suave` sobrepasa un poco al
+     final: es lo que da el rebote de la píldora de navegación y de los chips
+     al seleccionarse. Sin ella todo se siente correcto y muerto.            */
+  --lm-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --lm-ease-suave: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --lm-ease-salida: cubic-bezier(0.4, 0, 1, 1);
+  --lm-dur-fast: 140ms;
+  --lm-dur: 260ms;
+  --lm-dur-slow: 520ms;
+  --lm-dur-ambiente: 6s;
+
+  /* --- Layout ------------------------------------------------------------- */
+  --lm-sidebar-w: 268px;
+  --lm-topbar-h: 68px;
+  --lm-bottomnav-h: 72px;
+  --lm-container: 1180px;
+
+  /* ======================================================================
+     Alias heredados — ver la nota de cabecera
+     ====================================================================== */
+  --lm-emerald: var(--lm-navy);
+  --lm-emerald-900: var(--lm-navy-900);
+  --lm-emerald-700: var(--lm-navy-700);
+  --lm-emerald-100: var(--lm-lavanda-100);
+  --lm-emerald-050: var(--lm-lavanda-050);
+  --lm-emerald-rgb: var(--lm-navy-rgb);
+  --lm-emerald-900-rgb: 12, 26, 62;
+
+  --lm-teal: var(--lm-lavanda-ink);
+  --lm-teal-300: var(--lm-lavanda-300);
+  --lm-teal-100: var(--lm-lavanda-100);
+  --lm-teal-rgb: var(--lm-lavanda-ink-rgb);
+
+  --lm-terracotta: var(--lm-sol-ink);
+  --lm-terracotta-600: var(--lm-sol-600);
+  --lm-terracotta-100: var(--lm-sol-100);
+  --lm-terracotta-050: var(--lm-sol-050);
+  --lm-terracotta-rgb: var(--lm-sol-rgb);
+
+  /* --- Puente con Bootstrap 5.3 ------------------------------------------ */
+  --bs-primary: var(--lm-navy);
+  --bs-primary-rgb: var(--lm-navy-rgb);
+  --bs-body-bg: var(--lm-cream);
+  --bs-body-color: var(--lm-ink);
+  --bs-body-font-family: var(--lm-font-body);
+  --bs-border-color: var(--lm-line);
+  --bs-border-radius: var(--lm-radius);
+  --bs-border-radius-lg: var(--lm-radius-lg);
+  --bs-border-radius-sm: var(--lm-radius-sm);
+  --bs-link-color: var(--lm-lavanda-ink);
+  --bs-link-hover-color: var(--lm-navy);
+  --bs-focus-ring-color: rgba(var(--lm-lavanda-ink-rgb), 0.35);
+}

@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Lumys* — Identidad de marca
+   Estilos de <Isotipo> y <Logotipo> (ver componentes/Identidad.tsx)
+   ========================================================================== */
+
+.lm-isotipo { display: block; flex: none; }
+
+/* El isotipo respirando. Amplitud mínima y ciclo largo: es una marca, no un
+   elemento de interfaz, y si late fuerte compite con el contenido. */
+.lm-isotipo--respira {
+  animation: lm-iso-respira 7s var(--lm-ease) infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@keyframes lm-iso-respira {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50%      { transform: scale(1.05) rotate(2deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Logotipo
+   -------------------------------------------------------------------------- */
+
+.lm-logotipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  line-height: 1;
+}
+
+.lm-logotipo__iso { flex: none; }
+
+.lm-logotipo__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18em;
+  min-width: 0;
+}
+
+.lm-logotipo__palabra {
+  font-family: var(--lm-font-display);
+  font-size: var(--lm-logo-size, 34px);
+  font-weight: 600;
+  /* Fredoka es ancha; sin tracking negativo la palabra se desarma. */
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  white-space: nowrap;
+}
+
+.lm-logotipo__lum { color: var(--lm-navy); }
+.lm-logotipo__s { color: var(--lm-celeste); }
+
+/* La "y" recorre el degradado de marca. `background-clip: text` necesita que el
+   color sea transparente; el `color` de reserva de la línea anterior es lo que
+   se ve si el navegador no soporta el recorte. */
+.lm-logotipo__y {
+  color: var(--lm-lavanda);
+  background: linear-gradient(160deg, #cdb2ff 0%, #e6b6e8 45%, #ffc24d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Sobre navy: "Lum" tiene que ser claro o desaparece. */
+.lm-logotipo--inv .lm-logotipo__lum { color: var(--lm-cream); }
+
+/* --- Bajada: "Luz · Mente · Y · Salud" ----------------------------------- */
+.lm-logotipo__bajada {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.55em;
+  font-family: var(--lm-font-display);
+  /* Proporción tomada del logotipo original: la bajada es ~0.29 del tamaño de
+     la palabra, con mucho tracking. */
+  font-size: calc(var(--lm-logo-size, 34px) * 0.29);
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  line-height: 1.2;
+  text-transform: none;
+}
+.lm-logotipo__bajada em { font-style: normal; }
+
+.lm-bj-celeste { color: var(--lm-celeste-ink); }
+.lm-bj-lavanda { color: var(--lm-lavanda-ink); }
+.lm-bj-sol { color: var(--lm-sol-ink); }
+
+/* Sobre navy los tres tonos tinta se apagan: se usan los pasteles plenos, que
+   ahí sí tienen contraste de sobra. */
+.lm-logotipo--inv .lm-bj-celeste { color: var(--lm-celeste); }
+.lm-logotipo--inv .lm-bj-lavanda { color: var(--lm-lavanda); }
+.lm-logotipo--inv .lm-bj-sol { color: var(--lm-sol); }
+
+@media (max-width: 400px) {
+  /* La bajada con este tracking no cabe en pantallas estrechas y parte a media
+     palabra. Se retira: el logotipo se sostiene solo. */
+  .lm-logotipo__bajada { display: none; }
+}

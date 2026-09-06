@@ -5,7 +5,22 @@
       "name": "lumys",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 5000
+      "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "lumys-client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:client"],
+      "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "lumys-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:api"],
+      "port": 5000,
+      "autoPort": true
     }
   ]
 }

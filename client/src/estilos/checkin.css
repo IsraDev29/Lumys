@@ -1,0 +1,262 @@
+/* ==========================================================================
+   Lumys* — Check-in conversacional (Lumys Bot) y respiración guiada
+   Menos de un minuto, botones rápidos y espacio libre para escribir.
+   ========================================================================== */
+
+.lm-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: min(72dvh, 640px);
+  background: var(--lm-cream-soft);
+  border: 1px solid var(--lm-line);
+  border-radius: var(--lm-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--lm-shadow-sm);
+}
+
+.lm-chat__head {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-3) var(--lm-sp-4);
+  background: var(--lm-emerald);
+  color: var(--lm-cream);
+}
+.lm-chat__head img { width: 40px; flex: none; }
+.lm-chat__head-name { font-family: var(--lm-font-display); font-weight: 600; line-height: 1.15; }
+.lm-chat__head-status { font-size: var(--lm-fs-caption); color: rgba(var(--lm-cream-rgb), 0.66); display: flex; align-items: center; gap: 6px; }
+.lm-chat__head-status::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--lm-sol); box-shadow: 0 0 0 3px rgba(var(--lm-sol-rgb), 0.28);
+}
+
+.lm-chat__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--lm-sp-5) var(--lm-sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lm-sp-3);
+  scroll-behavior: smooth;
+}
+
+.lm-msg {
+  max-width: min(78%, 480px);
+  padding: 0.78rem 1.05rem;
+  font-size: 0.96rem;
+  line-height: 1.55;
+  animation: lm-msg-in var(--lm-dur) var(--lm-ease) both;
+}
+
+@keyframes lm-msg-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.lm-msg--bot {
+  align-self: flex-start;
+  background: var(--lm-white);
+  border: 1px solid var(--lm-line);
+  border-radius: var(--lm-radius-lg) var(--lm-radius-lg) var(--lm-radius-lg) 6px;
+  color: var(--lm-ink);
+}
+
+.lm-msg--user {
+  align-self: flex-end;
+  background: var(--lm-emerald);
+  color: var(--lm-cream);
+  border-radius: var(--lm-radius-lg) var(--lm-radius-lg) 6px var(--lm-radius-lg);
+}
+
+.lm-msg--sistema {
+  align-self: center;
+  max-width: 100%;
+  background: transparent;
+  color: var(--lm-ink-muted);
+  font-size: var(--lm-fs-caption);
+  text-align: center;
+  padding: 2px 0;
+}
+
+/* Indicador de escritura de Lumy */
+.lm-typing { display: inline-flex; gap: 5px; align-items: center; padding: 0.9rem 1.1rem; }
+.lm-typing span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--lm-teal-300);
+  animation: lm-typing 1.1s var(--lm-ease) infinite;
+}
+.lm-typing span:nth-child(2) { animation-delay: 0.16s; }
+.lm-typing span:nth-child(3) { animation-delay: 0.32s; }
+@keyframes lm-typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* Zona de respuesta */
+.lm-chat__foot {
+  border-top: 1px solid var(--lm-line);
+  background: var(--lm-white);
+  padding: var(--lm-sp-4);
+}
+
+.lm-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lm-sp-2);
+}
+
+.lm-quick__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.6rem 1.05rem;
+  min-height: 44px;
+  border: 1.5px solid var(--lm-emerald-100);
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-emerald-050);
+  color: var(--lm-emerald);
+  font-family: var(--lm-font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--lm-dur) var(--lm-ease);
+}
+.lm-quick__btn:hover {
+  background: var(--lm-emerald);
+  border-color: var(--lm-emerald);
+  color: var(--lm-cream);
+  transform: translateY(-2px);
+}
+.lm-quick__btn .lm-quick__emoji { font-size: 1.15rem; line-height: 1; }
+
+/* Escala de intensidad: se compara con uno mismo, nunca con el promedio */
+.lm-scale { display: flex; gap: var(--lm-sp-2); flex-wrap: wrap; }
+.lm-scale__btn {
+  flex: 1 1 52px;
+  min-width: 52px;
+  height: 52px;
+  border-radius: var(--lm-radius);
+  border: 1.5px solid var(--lm-line-strong);
+  background: var(--lm-white);
+  font-family: var(--lm-font-display);
+  font-weight: 700;
+  color: var(--lm-emerald-900);
+  cursor: pointer;
+  transition: all var(--lm-dur) var(--lm-ease);
+}
+.lm-scale__btn:hover { border-color: var(--lm-teal); background: var(--lm-emerald-050); transform: translateY(-2px); }
+.lm-scale__btn.is-selected { background: var(--lm-emerald); border-color: var(--lm-emerald); color: var(--lm-cream); }
+
+.lm-chat__composer { display: flex; gap: var(--lm-sp-2); align-items: flex-end; }
+.lm-chat__composer .lm-textarea { min-height: 52px; max-height: 140px; }
+
+.lm-chat__send {
+  width: 52px; height: 52px; flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lm-emerald);
+  color: var(--lm-cream);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--lm-dur) var(--lm-ease);
+}
+.lm-chat__send:hover { background: var(--lm-teal); transform: scale(1.05); }
+
+.lm-chat__voice {
+  width: 52px; height: 52px; flex: none;
+  border: 1.5px solid var(--lm-line-strong);
+  border-radius: 50%;
+  background: var(--lm-white);
+  color: var(--lm-teal);
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all var(--lm-dur) var(--lm-ease);
+}
+.lm-chat__voice:hover { border-color: var(--lm-teal); background: var(--lm-emerald-050); }
+.lm-chat__voice.is-recording {
+  background: var(--lm-terracotta);
+  border-color: var(--lm-terracotta);
+  color: #fff;
+  animation: lm-pulse 1.4s var(--lm-ease) infinite;
+}
+@keyframes lm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--lm-terracotta-rgb), 0.4); }
+  70% { box-shadow: 0 0 0 14px rgba(var(--lm-terracotta-rgb), 0); }
+}
+
+/* Progreso del check-in */
+.lm-chat__progress {
+  display: flex;
+  gap: 5px;
+  padding: 0 var(--lm-sp-4) var(--lm-sp-3);
+  background: var(--lm-white);
+}
+.lm-chat__progress span {
+  flex: 1;
+  height: 5px;
+  border-radius: var(--lm-radius-pill);
+  background: var(--lm-line);
+  transition: background var(--lm-dur) var(--lm-ease);
+}
+.lm-chat__progress span.is-done { background: var(--lm-teal); }
+
+/* --- Cierre del check-in: qué se guarda y qué no --------------------------- */
+.lm-resumen-privacidad {
+  display: grid;
+  gap: var(--lm-sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+/* ==========================================================================
+   Respiración guiada
+   ========================================================================== */
+
+.lm-breath {
+  display: grid;
+  place-items: center;
+  gap: var(--lm-sp-5);
+  padding: clamp(1.5rem, 5vw, 3rem) var(--lm-sp-4);
+  text-align: center;
+}
+
+.lm-breath__orb {
+  position: relative;
+  width: min(280px, 68vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 34% 30%, var(--lm-celeste-100), var(--lm-celeste) 42%, var(--lm-lavanda) 100%);
+  box-shadow: 0 20px 60px rgba(var(--lm-teal-rgb), 0.28);
+  transform: scale(0.72);
+  transition: transform 4s var(--lm-ease);
+}
+.lm-breath__orb.is-inhale { transform: scale(1); }
+.lm-breath__orb.is-hold { transform: scale(1); transition-duration: 0.2s; }
+.lm-breath__orb.is-exhale { transform: scale(0.72); transition-duration: 6s; }
+
+.lm-breath__orb::after {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  border: 2px dashed rgba(var(--lm-teal-rgb), 0.24);
+  animation: lm-spin 26s linear infinite;
+}
+@keyframes lm-spin { to { transform: rotate(360deg); } }
+
+/* El orbe pasó de un verde profundo a un degradado celeste → lavanda. Sobre ese
+   pastel el texto blanco desaparece (contraste 1:1), así que la etiqueta va en
+   navy. Es la palabra que hay que poder leer de reojo mientras se respira —
+   "Inhalá", "Sostené", "Exhalá"—: no puede depender de la suerte del contraste. */
+.lm-breath__label {
+  font-family: var(--lm-font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  color: var(--lm-navy-900);
+  text-shadow: 0 1px 8px rgba(var(--lm-cream-rgb), 0.7);
+  position: relative;
+  z-index: 1;
+}
+
+.lm-breath__count { font-family: var(--lm-font-display); font-size: 2.6rem; font-weight: 700; color: var(--lm-emerald-900); line-height: 1; }

@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Lumys* — Red de confianza
+
+   Estilos propios de la vista /red: el selector de modo, las tarjetas de los
+   canales oficiales y la escalera de contingencia. Lo genérico —tarjetas,
+   notas, interruptores— sale de components.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Selector de modo
+
+   Dos tarjetas grandes, no un interruptor. La diferencia entre "mi gente" y
+   "nadie de mi entorno" es demasiado importante como para resolverla con un
+   control de dos estados que hay que interpretar: cada opción se ve entera,
+   con su explicación al lado de la otra, y se elige comparando.
+   -------------------------------------------------------------------------- */
+
+.lm-modos {
+  display: grid;
+  gap: clamp(0.85rem, 1.8vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+}
+
+.lm-modo { position: relative; display: block; cursor: pointer; height: 100%; }
+
+/* El radio real se mantiene en el DOM y solo se esconde a la vista: es lo que
+   da navegación con flechas, el anuncio de "1 de 2" y el foco del teclado. */
+.lm-modo input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.lm-modo__box {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--lm-sp-5);
+  border: 2px solid var(--lm-line);
+  border-radius: var(--lm-radius-lg);
+  background: var(--lm-white);
+  overflow: hidden;
+  transition:
+    border-color var(--lm-dur) var(--lm-ease),
+    box-shadow var(--lm-dur) var(--lm-ease),
+    transform var(--lm-dur) var(--lm-ease);
+}
+
+/* Velo de color que se enciende al seleccionar. Se anima la opacidad de una
+   capa ya pintada en vez del `background` de la tarjeta: el navegador compone
+   y no repinta. */
+.lm-modo__box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--lm-degradado-calma);
+  opacity: 0;
+  transition: opacity var(--lm-dur) var(--lm-ease);
+}
+.lm-modo__box > * { position: relative; }
+
+.lm-modo__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--lm-sp-3);
+  margin-bottom: var(--lm-sp-2);
+}
+
+.lm-modo__icono {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--lm-radius);
+  background: var(--lm-lavanda-050);
+  border: 1px solid var(--lm-lavanda-100);
+  color: var(--lm-lavanda-ink);
+  font-size: 1.45rem;
+  transition: transform var(--lm-dur) var(--lm-ease-suave);
+}
+
+/* La marca de selección. Entra con un rebote corto: es la confirmación de que
+   se eligió, y conviene que se note. */
+.lm-modo__check {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lm-navy);
+  color: var(--lm-white);
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--lm-dur-fast) var(--lm-ease),
+    transform var(--lm-dur) var(--lm-ease-suave);
+}
+
+.lm-modo__titulo {
+  font-family: var(--lm-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--lm-navy-900);
+  line-height: 1.2;
+}
+
+.lm-modo__gancho {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--lm-lavanda-ink);
+}
+
+.lm-modo__texto {
+  margin-top: var(--lm-sp-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--lm-ink-soft);
+}
+
+.lm-modo__pie {
+  margin-top: auto;
+  padding-top: var(--lm-sp-4);
+  font-size: var(--lm-fs-caption);
+  font-weight: 600;
+  color: var(--lm-ink-muted);
+}
+
+/* --- Estados --- */
+.lm-modo:hover .lm-modo__box {
+  border-color: var(--lm-lavanda-300);
+  transform: translateY(-3px);
+  box-shadow: var(--lm-shadow);
+}
+.lm-modo:hover .lm-modo__icono { transform: scale(1.06) rotate(-4deg); }
+
+.lm-modo.is-activo .lm-modo__box {
+  border-color: var(--lm-navy);
+  box-shadow: var(--lm-shadow);
+}
+.lm-modo.is-activo .lm-modo__box::before { opacity: 0.5; }
+.lm-modo.is-activo .lm-modo__check { opacity: 1; transform: scale(1); }
+.lm-modo.is-activo .lm-modo__icono {
+  background: var(--lm-white);
+  border-color: var(--lm-lavanda-300);
+}
+.lm-modo.is-activo .lm-modo__pie { color: var(--lm-navy-700); }
+
+.lm-modo input:focus-visible + .lm-modo__box {
+  outline: 3px solid var(--lm-lavanda-300);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Canales oficiales
+
+   Tienen su propio tratamiento —fondo teñido, sin interruptor— porque no son
+   contactos de la red: son información permanente. Que se vean distintos a las
+   tarjetas de contacto es intencional; visualmente no se pueden confundir con
+   algo que el estudiante pueda apagar.
+   -------------------------------------------------------------------------- */
+
+.lm-oficial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lm-sp-3);
+  padding: var(--lm-sp-5);
+  border-radius: var(--lm-radius-lg);
+  border: 1.5px solid var(--lm-line);
+  background: var(--lm-white);
+}
+
+.lm-oficial__head { display: flex; align-items: center; gap: var(--lm-sp-3); }
+
+.lm-oficial__icono {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.25rem;
+}
+
+.lm-oficial__nombre {
+  font-family: var(--lm-font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--lm-navy-900);
+  line-height: 1.2;
+}
+
+.lm-oficial__texto {
+  flex: 1;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--lm-ink-soft);
+}
+
+/* El botón de llamar hereda de .lm-btn pero se queda en navy también al pasar
+   el ratón: un teléfono de emergencia no cambia de color por un hover, y menos
+   al lavanda que en el resto de la aplicación significa "acción cualquiera". */
+.lm-oficial__btn { margin-top: var(--lm-sp-1); }
+.lm-oficial__btn:hover {
+  --lm-btn-bg: var(--lm-navy-900);
+  --lm-btn-bd: var(--lm-navy-900);
+  color: var(--lm-cream);
+}
+
+.lm-oficial--sol { background: var(--lm-sol-050); border-color: var(--lm-sol-100); }
+.lm-oficial--sol .lm-oficial__icono {
+  background: var(--lm-sol);
+  color: var(--lm-navy-900);
+}
+
+.lm-oficial--celeste { background: var(--lm-celeste-050); border-color: var(--lm-celeste-100); }
+.lm-oficial--celeste .lm-oficial__icono {
+  background: var(--lm-celeste);
+  color: var(--lm-navy-900);
+}
+
+.lm-card--oficial {
+  border-color: var(--lm-lavanda-100);
+  background:
+    linear-gradient(180deg, var(--lm-lavanda-050) 0%, var(--lm-white) 46%);
+}
+
+/* --------------------------------------------------------------------------
+   Modo anónimo
+   -------------------------------------------------------------------------- */
+
+.lm-card--anonima {
+  border-color: var(--lm-lavanda-100);
+  background:
+    radial-gradient(520px 260px at 88% -18%, rgba(var(--lm-celeste-rgb), 0.5), transparent 62%),
+    linear-gradient(180deg, var(--lm-lavanda-050) 0%, var(--lm-white) 52%);
+}
+
+.lm-chip--anonima {
+  background: var(--lm-navy);
+  border-color: var(--lm-navy);
+  color: var(--lm-cream);
+}
+
+/* --------------------------------------------------------------------------
+   Escalera de contingencia
+
+   Ahora es un `<ol>`: el orden de los pasos es información, no decoración, y
+   así lo anuncia el lector de pantalla.
+   -------------------------------------------------------------------------- */
+
+.lm-escalera { list-style: none; margin: 0; padding: 0; }
+
+.lm-escalera__titulo {
+  margin: 0;
+  font-family: var(--lm-font-display);
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--lm-navy-900);
+  line-height: 1.25;
+}
+
+.lm-escalera__paso { align-items: flex-start; }
+.lm-escalera__icon { margin-top: 1px; }
+
+.lm-escalera__icon--alerta {
+  background: var(--lm-sol-050);
+  color: var(--lm-sol-ink);
+  border-color: var(--lm-sol-100);
+}
+
+@media (max-width: 575.98px) {
+  .lm-oficial,
+  .lm-modo__box { padding: var(--lm-sp-4); }
+}

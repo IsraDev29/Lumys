@@ -1,5 +1,5 @@
 const prompts = require('./ia.prompt');
-const { pedirJson, hayIA } = require('./ia.service');
+const proveedores = require('./proveedores');
 
 // ---------------------------------------------------------------------------
 // Análisis de voz (opcional, con consentimiento explícito)
@@ -73,7 +73,7 @@ async function analizarVoz({ caracteristicas, propioPromedio = null, consentimie
 
     const desviaciones = compararConReferencia(caracteristicas, propioPromedio);
 
-    if (!hayIA()) {
+    if (!(await proveedores.hayAlguno())) {
         return {
             observaciones: desviaciones.length
                 ? desviaciones.map((d) => `${d.clave}: ${d.sentido} (${d.valor})`)
@@ -94,14 +94,11 @@ async function analizarVoz({ caracteristicas, propioPromedio = null, consentimie
     ].join('\n');
 
     try {
-        const analisis = await pedirJson({
-            sistema: prompts.SISTEMA_VOZ,
-            usuario: contexto,
-            esquema: prompts.ESQUEMA_VOZ,
-            maxTokens: 700,
+        const { datos } = await proveedores.generar({
+            construir: (perfil) => prompts.vozPara(perfil, contexto),
             esfuerzo: 'low',
         });
-        return { ...analisis, generado: true };
+        return { ...datos, generado: true };
     } catch (error) {
         console.error('[IA] análisis de voz:', error.message);
         return {
@@ -113,4 +110,36 @@ async function analizarVoz({ caracteristicas, propioPromedio = null, consentimie
     }
 }
 
-module.exports = { REFERENCIA, compararConReferencia, analizarVoz };
+/**
+ * Promedio prosódico propio del estudiante, a partir de sus notas de voz
+ * anteriores.
+ *
+ * Existe porque la comparación ipsativa es la que de verdad sirve: que un
+ * adolescente hable a 120 palabras por minuto no dice nada — hay quien habla
+ * así siempre — pero que hable a 120 cuando su propio promedio es 170 sí es un
+ * dato. Sin esto, `compararConReferencia` solo puede comparar contra constantes
+ * de manual y la mitad de su lógica queda muerta.
+ *
+ * Se piden al menos tres registros: con uno o dos, el "promedio propio" es
+ * ruido y produciría desviaciones inventadas en cada check-in.
+ */
+const MINIMO_REGISTROS = 3;
+
+function promedioPropio(registros) {
+    const conVoz = registros
+        .map((r) => r.respuestas?.voz?.caracteristicas)
+        .filter((c) => c && typeof c === 'object');
+
+    if (conVoz.length < MINIMO_REGISTROS) return null;
+
+    const promedio = {};
+    for (const clave of Object.keys(REFERENCIA)) {
+        const valores = conVoz.map((c) => c[clave]).filter((v) => typeof v === 'number');
+        if (valores.length < MINIMO_REGISTROS) continue;
+        promedio[clave] = valores.reduce((s, v) => s + v, 0) / valores.length;
+    }
+
+    return Object.keys(promedio).length ? promedio : null;
+}
+
+module.exports = { REFERENCIA, MINIMO_REGISTROS, compararConReferencia, analizarVoz, promedioPropio };

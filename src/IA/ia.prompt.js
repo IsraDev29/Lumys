@@ -188,6 +188,191 @@ const ESQUEMA_TURNO = {
 };
 
 // ---------------------------------------------------------------------------
+// Perfil compacto — para el modelo local
+//
+// La persona de arriba son más de mil tokens de reglas en prosa. Contra un
+// modelo remoto grande eso está bien: los sigue y el prompt viaja cacheado. En
+// un modelo de 1B corriendo en CPU es un mal negocio por dos motivos distintos:
+//
+//   1. No los sigue. Pasado cierto largo, un modelo chico atiende las primeras
+//      instrucciones y las últimas, y se le pierde el medio. Diez reglas en
+//      prosa rinden peor que cinco numeradas.
+//   2. Se pagan dos veces. Sin GPU, procesar el prompt es trabajo real antes de
+//      generar el primer token, y es lo que más se siente en el tiempo hasta que
+//      aparece la pregunta en pantalla.
+//
+// Y una diferencia que cambia cómo se escribe esto: Ollama compila el esquema a
+// una gramática, así que el modelo NUNCA ve las `description` de las
+// propiedades. Toda la guía semántica que allá vive en el esquema, acá tiene
+// que estar en el texto del prompt o no existe.
+//
+// Lo que NO se recorta, aunque cueste tokens: el manejo de lenguaje de riesgo y
+// la prohibición de vocabulario clínico. Son las dos reglas cuyo incumplimiento
+// hace daño, no solo ruido.
+// ---------------------------------------------------------------------------
+
+const PERSONA_CHECKIN_COMPACTA = `Sos Lumys. Hacés el check-in diario de un estudiante de secundaria en Nicaragua.
+
+Reglas:
+1. Español de Nicaragua, voseo: "¿cómo venís?", "contame", "¿te fue bien?". Nunca "tú".
+2. Frases de chat, cortas. Máximo 20 palabras por pregunta.
+3. Prohibidas estas palabras: ansiedad, depresión, estrés, síntoma, diagnóstico, trastorno, terapia, salud mental. Nunca pidas calificar del 1 al 10.
+4. Preguntá por algo concreto y observable de ayer: un momento, una persona, el sueño, el recreo, el camino al colegio. Nunca "¿cómo te sentís?".
+5. Empezá con una reacción de una línea a lo que acaba de decir. En el primer turno la reacción va vacía.
+6. No des consejos ni le digas qué le pasa.
+7. Si menciona hacerse daño, no querer vivir o daño a otros: no preguntés nada más, respondé con calidez y poné cierre en true.
+
+Tono que buscamos:
+- "¿Qué fue lo último que te hizo reír, aunque haya sido una tontera?"
+- "¿Anoche te dormiste de una o le diste vueltas al asunto?"
+- "¿Con quién hablaste ayer que no fuera por obligación?"
+
+Con formato "opciones" devolvés 2 a 4 botones, cada uno con un emoji, una etiqueta de máximo tres palabras y un valor entero de 1 a 5, donde 1 es la peor situación para esa dimensión y 5 la mejor. No los ordenés de peor a mejor: no debe poder deducir cuál es "la buena". Con formato "escala" o "texto", opciones va vacío.`;
+
+/**
+ * Esquema compacto. Dos diferencias con el completo, las dos por latencia:
+ *
+ * - Sin `motivo`. Es traza interna que el estudiante nunca ve, y en CPU cada
+ *   token generado se paga en tiempo de espera. Son ~25 tokens por turno que no
+ *   le sirven a nadie mientras alguien mira la pantalla.
+ * - Sin `description`. En Ollama no llegan al modelo: solo engordarían la
+ *   gramática. Su contenido está en la persona compacta.
+ */
+const ESQUEMA_TURNO_COMPACTO = {
+  type: 'object',
+  properties: {
+    reaccion: { type: 'string' },
+    pregunta: { type: 'string' },
+    componente: { type: 'string', enum: [...COMPONENTES, 'libre'] },
+    formato: { type: 'string', enum: ['opciones', 'escala', 'texto'] },
+    opciones: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          etiqueta: { type: 'string' },
+          emoji: { type: 'string' },
+          valor: { type: 'integer', enum: [1, 2, 3, 4, 5] },
+        },
+        required: ['etiqueta', 'emoji', 'valor'],
+        additionalProperties: false,
+      },
+    },
+    cierre: { type: 'boolean' },
+  },
+  required: ['reaccion', 'pregunta', 'componente', 'formato', 'opciones', 'cierre'],
+  additionalProperties: false,
+};
+
+/**
+ * Contexto de turno recortado. El completo enumera componentes cubiertos y
+ * pendientes, resume la conversación entera y explica la política de cierre. El
+ * modelo chico se pierde en eso: acá se le da el componente ya elegido en vez de
+ * la lista para que elija, y solo el último intercambio en vez de todos.
+ *
+ * Elegir el componente fuera del modelo no es una pérdida — el orden de las
+ * dimensiones nunca fue algo que convenga dejar al azar del muestreo.
+ */
+function contextoDeTurnoCompacto({ nombre, momento, racha, memoria, sesion, angulo }) {
+  const cubiertos = sesion.map((t) => t.componente).filter((c) => COMPONENTES.includes(c));
+  const pendientes = COMPONENTES.filter((c) => !cubiertos.includes(c));
+
+  // Con 4 intercambios ya hay material suficiente para el ICVE; el turno de
+  // texto libre cierra. Esta decisión es aritmética, no del modelo.
+  const componente = pendientes.length && sesion.length < 4 ? pendientes[0] : 'libre';
+
+  const lineas = [`Estudiante: ${nombre}. Es ${momento}.`];
+
+  if (racha > 2) lineas.push(`Lleva ${racha} días seguidos. No lo menciones salvo que venga al caso.`);
+
+  // Solo el último intercambio: al modelo chico le alcanza para no repetirse y
+  // evita arrastrar toda la sesión en cada turno, que es contexto que se
+  // reprocesa entero en cada llamada.
+  const ultimo = sesion[sesion.length - 1];
+  if (ultimo) {
+    lineas.push(
+      '',
+      `Le preguntaste: "${ultimo.pregunta}"`,
+      `Respondió: "${ultimo.respuesta}"`,
+      'Reaccioná a eso en una línea y no repitas ese arranque de frase.',
+    );
+  } else {
+    lineas.push('', 'Es el primer intercambio: dejá la reacción vacía, saludá corto y preguntá.');
+  }
+
+  if (memoria.length) {
+    lineas.push('', `De días anteriores: ${memoria[0]}`);
+  }
+
+  lineas.push(
+    '',
+    `Preguntá sobre: ${componente}.`,
+    `Ángulo: ${angulo}.`,
+    componente === 'libre'
+      ? 'Usá formato "texto", invitalo a contar algo más y poné cierre en true.'
+      : 'Usá formato "opciones" salvo que la pregunta sea de intensidad, ahí usá "escala".',
+  );
+
+  return lineas.join('\n');
+}
+
+const SISTEMA_ANALISIS_COMPACTO = `Analizás un check-in emocional ya terminado de un estudiante de secundaria en Nicaragua.
+
+Reglas:
+1. NUNCA cités literal lo que escribió, ni en los factores ni en la nota. Parafraseá siempre: la plataforma le prometió que nadie lo leería palabra por palabra.
+2. Cada factor se apoya en algo que efectivamente dijo o marcó hoy. No inventés causas. Si el material no alcanza, bajá la confianza.
+3. "coach" es para el estudiante: máximo dos frases, concreto, sin lenguaje clínico, sin motivación de póster.
+4. "nota_orientador": máximo tres líneas, qué cambió y qué observar, sin diagnósticos.
+
+Clasificá lenguaje_riesgo:
+- "ninguno": nada que destacar.
+- "malestar": la está pasando mal, sin riesgo.
+- "riesgo_posible": desesperanza, sentirse una carga, querer desaparecer, aislamiento marcado.
+- "riesgo_explicito": hacerse daño, no querer seguir vivo, o daño a otros.
+
+Ante la duda entre dos niveles elegí SIEMPRE el más alto. Una persona lo revisa después: tu trabajo no es decidir, es no dejar pasar.`;
+
+const ESQUEMA_ANALISIS_COMPACTO = {
+  type: 'object',
+  properties: {
+    sentimiento: { type: 'string', enum: ['positivo', 'neutro', 'negativo', 'mixto'] },
+    confianza: { type: 'number' },
+    factores: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          factor: { type: 'string' },
+          evidencia: { type: 'string' },
+          direccion: { type: 'string', enum: ['protege', 'tensiona'] },
+        },
+        required: ['factor', 'evidencia', 'direccion'],
+        additionalProperties: false,
+      },
+    },
+    explicacion: { type: 'string' },
+    coach: { type: 'string' },
+    nota_orientador: { type: 'string' },
+    lenguaje_riesgo: {
+      type: 'string',
+      enum: ['ninguno', 'malestar', 'riesgo_posible', 'riesgo_explicito'],
+    },
+    necesita_persona: { type: 'boolean' },
+  },
+  required: [
+    'sentimiento',
+    'confianza',
+    'factores',
+    'explicacion',
+    'coach',
+    'nota_orientador',
+    'lenguaje_riesgo',
+    'necesita_persona',
+  ],
+  additionalProperties: false,
+};
+
+// ---------------------------------------------------------------------------
 // Análisis del check-in cerrado
 // ---------------------------------------------------------------------------
 
@@ -260,7 +445,7 @@ const ESQUEMA_ANALISIS = {
   additionalProperties: false,
 };
 
-function contextoDeAnalisis({ turnos, textoLibre, icve, lineaBase, delta }) {
+function contextoDeAnalisis({ turnos, textoLibre, icve, lineaBase, delta, desviados = [] }) {
   const lineas = ['Check-in de hoy:'];
 
   turnos.forEach((t) => {
@@ -282,6 +467,31 @@ function contextoDeAnalisis({ turnos, textoLibre, icve, lineaBase, delta }) {
       `Su propio promedio móvil es ${lineaBase}. Hoy está ${Math.abs(delta)} puntos ${sentido} de eso.`,
       'La comparación es siempre contra él mismo, nunca contra otros estudiantes.',
     );
+
+    // El ICVE global dice cuánto se movió; esto dice QUÉ se movió. Es la
+    // diferencia entre "subió 14 puntos" y "duerme igual que siempre pero dejó
+    // de hablar con gente", que es lo único de los dos sobre lo que un
+    // orientador puede hacer algo el lunes.
+    //
+    // Ojo con las dos escalas, que van al revés: el ICVE es 0-100 y más alto es
+    // peor; los componentes son 1-5 y más alto es mejor. Se le dice explícito
+    // al modelo porque confundirlas invierte la lectura entera.
+    if (desviados.length) {
+      lineas.push(
+        '',
+        'Frente a su patrón habitual por componente (escala 1 a 5, más alto = mejor), estos se movieron:',
+      );
+      desviados.forEach((d) => {
+        const direccion = d.delta < 0 ? 'peor que su normal' : 'mejor que su normal';
+        lineas.push(`- ${d.componente}: habitualmente ${d.habitual}, hoy ${d.hoy} → ${direccion}.`);
+      });
+      lineas.push('Nombrá en la nota qué componente se movió, no solo que el puntaje cambió.');
+    } else {
+      lineas.push(
+        '',
+        'Ningún componente se apartó más de un punto de su patrón habitual. Si el puntaje igual se movió, viene de varios movimientos chicos a la vez: no le atribuyas una causa única.',
+      );
+    }
   }
 
   return lineas.join('\n');
@@ -314,6 +524,63 @@ const ESQUEMA_VOZ = {
   additionalProperties: false,
 };
 
+// ---------------------------------------------------------------------------
+// Selección por perfil
+//
+// `maxTokens` se decide acá y no en el servicio porque es parte del contrato del
+// prompt: cuánto puede escribir el modelo depende de qué se le pidió escribir.
+// En el perfil compacto son topes ajustados — es la palanca de latencia más
+// directa que existe cuando no hay GPU.
+// ---------------------------------------------------------------------------
+
+function turnoPara(perfil, datos) {
+  if (perfil === 'compacto') {
+    return {
+      sistema: PERSONA_CHECKIN_COMPACTA,
+      usuario: contextoDeTurnoCompacto(datos),
+      esquema: ESQUEMA_TURNO_COMPACTO,
+      // Una reacción, una pregunta y hasta cuatro botones entran de sobra en
+      // 220 tokens. Es tope, no objetivo: si quedara corto el JSON saldría
+      // truncado y el proveedor lo reporta como inválido.
+      maxTokens: 220,
+    };
+  }
+
+  return {
+    sistema: PERSONA_CHECKIN,
+    usuario: contextoDeTurno(datos),
+    esquema: ESQUEMA_TURNO,
+    maxTokens: 900,
+  };
+}
+
+function analisisPara(perfil, datos) {
+  if (perfil === 'compacto') {
+    return {
+      sistema: SISTEMA_ANALISIS_COMPACTO,
+      usuario: contextoDeAnalisis(datos),
+      esquema: ESQUEMA_ANALISIS_COMPACTO,
+      maxTokens: 600,
+    };
+  }
+
+  return {
+    sistema: SISTEMA_ANALISIS,
+    usuario: contextoDeAnalisis(datos),
+    esquema: ESQUEMA_ANALISIS,
+    maxTokens: 1600,
+  };
+}
+
+function vozPara(perfil, contexto) {
+  return {
+    sistema: SISTEMA_VOZ,
+    usuario: contexto,
+    esquema: ESQUEMA_VOZ,
+    maxTokens: perfil === 'compacto' ? 300 : 700,
+  };
+}
+
 module.exports = {
   COMPONENTES,
   ANGULOS,
@@ -325,4 +592,14 @@ module.exports = {
   contextoDeAnalisis,
   SISTEMA_VOZ,
   ESQUEMA_VOZ,
+  // Perfil compacto (modelo local)
+  PERSONA_CHECKIN_COMPACTA,
+  ESQUEMA_TURNO_COMPACTO,
+  contextoDeTurnoCompacto,
+  SISTEMA_ANALISIS_COMPACTO,
+  ESQUEMA_ANALISIS_COMPACTO,
+  // Selectores
+  turnoPara,
+  analisisPara,
+  vozPara,
 };

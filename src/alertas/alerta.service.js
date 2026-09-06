@@ -112,7 +112,7 @@ async function contextoDeLaSenal(senal) {
 
 /**
  * Arma la alerta con la forma que ya consume el tablero (`DEMO.casos` en
- * Public/JS/api.js). Se respetan esos nombres —incluido `señales` con eñe— para
+ * client/src/lib/demo.ts). Se respetan esos nombres —incluido `señales` con eñe— para
  * que el frontend funcione igual con datos reales que con los de demostración.
  */
 function comoAlerta(senal, contexto) {

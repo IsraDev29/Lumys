@@ -1,0 +1,2 @@
+import{i as e,n as t}from"./jsx-runtime-Cltr0gcK.js";var n=e(t(),1);function r(e,t=[]){let[r,i]=(0,n.useState)({datos:null,cargando:!0,error:null});return(0,n.useEffect)(()=>{let t=!0;return i({datos:null,cargando:!0,error:null}),e().then(e=>{t&&i({datos:e,cargando:!1,error:null})},e=>{t&&i({datos:null,cargando:!1,error:e})}),()=>{t=!1}},t),r}export{r as t};
+//# sourceMappingURL=useDatos-D7A6neW5.js.map
