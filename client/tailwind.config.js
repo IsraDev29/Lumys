@@ -1,24 +1,3 @@
-/* ===========================================================================
- * Lumys* — Tailwind (v3)
- * ---------------------------------------------------------------------------
- * Este archivo NO es una configuración escrita a mano: es el `tailwind.config`
- * que venía embebido en los exports de Stitch, fusionado en uno solo. Se
- * mantiene deliberadamente idéntico —los mismos hex, los mismos rem— porque las
- * pantallas se portan clase por clase y cualquier retoque "de buen gusto" aquí
- * desalinea las 21 a la vez.
- *
- * Por qué v3 y no v4: los mockups se renderizaron con el Play CDN
- * (cdn.tailwindcss.com), que es v3. Entre v3 y v4 cambian la escala de sombras
- * (`shadow-sm` pasa a ser `shadow-xs`), el grosor por defecto de `ring`, el
- * color de borde por defecto y los nombres de degradado. Con v4 habría que
- * reinterpretar 1.125 clases y el resultado ya no sería el de la captura.
- *
- * Preflight va desactivado: la app todavía carga Bootstrap 5.3 y ~3.400 líneas
- * de CSS propio, y el reset global de Tailwind les pasaría por encima. En su
- * lugar, estilos/stitch.css lleva un reset equivalente con alcance `.stitch`,
- * que es la raíz que envuelve cada vista portada.
- * =========================================================================== */
-
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -88,18 +67,8 @@ export default {
         'brand-yellow': '#ffd77a',
         'secondary-sky': '#aee0f6',
 
-        /* `primary-tint` aparece dos veces en el panel profesional pero ningún
-           export de Stitch lo declara: en el mockup se renderizó sin color. Se
-           fija aquí al lavanda más claro de la paleta, que es lo que el resto
-           de la pantalla usa para ese mismo papel. */
         'primary-tint': '#f2ecfe',
 
-        /* Único token en el que los exports se contradicen: la landing lo pinta
-           con el amarillo sol (#ffd77a) y las otras veinte con el oro apagado
-           (#d1ac54). En vez de elegir uno y romper la mitad, viaja por variable
-           CSS —ver estilos/stitch.css— para que `.stitch-landing` lo cambie sin
-           duplicar la paleta. El formato `rgb(... / <alpha-value>)` es lo que
-           mantiene vivos los modificadores de opacidad (`/40`, `/60`). */
         'tertiary-container': 'rgb(var(--stitch-tertiary-container) / <alpha-value>)',
       },
 
@@ -149,10 +118,6 @@ export default {
         'margin-desktop': '2.5rem',
       },
 
-      /* Ojo: esto redefine `rounded-lg` (0.5rem → 2rem) y `rounded-xl`
-         (0.75rem → 3rem) respecto a Tailwind por defecto. Es lo que hacía
-         Stitch y de ahí sale la morfología mullida de las tarjetas. `rounded-2xl`
-         y `rounded-3xl`, que son las más usadas, siguen siendo las de fábrica. */
       borderRadius: {
         DEFAULT: '1rem',
         lg: '2rem',

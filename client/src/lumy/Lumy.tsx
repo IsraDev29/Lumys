@@ -507,6 +507,7 @@ export function Lumy({
       aria-label={etiqueta ?? undefined}
       aria-hidden={etiqueta ? undefined : true}
       data-lumy-listo="1"
+      data-emocion={emocion}
     >
       <svg className="lumy" viewBox={GEO.viewBox} xmlns="http://www.w3.org/2000/svg" ref={svgRef} aria-hidden="true">
         <defs>
@@ -556,6 +557,18 @@ export function Lumy({
                      ref={(el) => { nodos.current.ojo.der.parpado = el; }} />
           </clipPath>
         </defs>
+
+        {/* Arte oficial de Lumys: la animacion vive en el contenedor para
+            conservar intacta la ilustracion original. */}
+        <image
+          className="lumy-oficial"
+          href="/img/lumys-mascota-oficial.png"
+          x="0"
+          y="0"
+          width="207"
+          height="176"
+          preserveAspectRatio="xMidYMid slice"
+        />
 
         <g className="lumy-mundo" transform={`translate(${dx} ${dy})`}>
 

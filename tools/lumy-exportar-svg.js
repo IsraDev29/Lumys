@@ -1,37 +1,3 @@
-#!/usr/bin/env node
-/* ===========================================================================
- * Lumy — exportador de SVG por emoción
- * ---------------------------------------------------------------------------
- *     node tools/lumy-exportar-svg.js [carpeta-destino]
- *     npm run lumy:svg
- *
- * Escribe un SVG autocontenido por cada estado del catálogo, más un archivo
- * base con el rig en reposo. Están pensados para importarse en Rive, pero
- * sirven igual para prensa, stickers o cualquier cosa que necesite un Lumy
- * quieto con una emoción concreta.
- *
- * Usa el MISMO núcleo geométrico que el rig del navegador
- * (client/src/lumy/nucleo.ts), así que lo que sale acá es cuadro por cuadro lo
- * que ve el estudiante en la app. No hay una segunda implementación que se
- * pueda desincronizar.
- *
- * ---------------------------------------------------------------------------
- * NOTAS PARA RIVE
- *
- * El importador de Rive no es un navegador. Tres cosas a saber:
- *
- *   1. `<filter>` (feGaussianBlur) se ignora. Afecta al brillo difuso del
- *      cuerpo y al rubor, que llegarán con borde duro. En Rive se rehacen con
- *      un blur del propio editor, o se deja el borde duro: a tamaño de app
- *      casi no se nota. Por eso el exportador puede correr con --sin-filtros.
- *   2. `<clipPath>` llega, pero conviene rehacer el párpado como un grupo con
- *      máscara nativa para poder animarlo desde el state machine.
- *   3. Los gradientes radiales con `r` en porcentaje se importan bien; los
- *      `stop-opacity` también.
- *
- * El detalle de cómo rearmar el rig completo está en docs/lumy-rive-spec.md.
- * =========================================================================== */
-
 'use strict';
 
 const fs = require('fs');

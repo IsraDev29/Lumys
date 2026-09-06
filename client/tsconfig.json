@@ -12,12 +12,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
 
-    /* El núcleo de Lumy (src/lumy/) lo cargan también `node --test` y el
-       exportador de SVG, que leen los .ts directamente con el borrado de tipos
-       de Node 24. Ese borrado no compila: solo tacha. `erasableSyntaxOnly` hace
-       que el compilador rechace enum, namespace o parámetros-propiedad, que son
-       justo las construcciones que romperían esos dos consumidores. Es una
-       restricción a propósito, no un descuido. */
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,

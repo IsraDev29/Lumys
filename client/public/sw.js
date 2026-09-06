@@ -74,6 +74,9 @@ const SHELL = [
 
   '/img/lumys-app-icon.svg',
   '/img/lumys-mascota.svg',
+  '/img/lumys-mascota-oficial.svg',
+  '/img/lumys-mascota-oficial-transparente.svg',
+  '/img/lumys-mascota-oficial.png',
   '/img/lumys-mascota-plana.svg',
   '/img/lumys-logo-horizontal.svg',
   '/img/lumys-logo-reverse.svg',
