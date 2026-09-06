@@ -14,6 +14,7 @@ Calcula un Índice Compuesto de Vulnerabilidad Emocional (ICVE) a partir de regi
 - [Variables de entorno](#variables-de-entorno)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Módulos del backend](#módulos-del-backend)
+- [Identidad de marca](#identidad-de-marca)
 - [Modelo de base de datos](#modelo-de-base-de-datos)
 - [Endpoints de la API](#endpoints-de-la-api)
 - [Contribuciones](#contribuciones)
@@ -36,19 +37,38 @@ Usuarios objetivo: estudiantes, docentes, orientadores educativos e institucione
 
 ## Tecnologías usadas
 
+**Backend**
+
 | Tecnología | Versión | Uso |
 |---|---|---|
-| Node.js | 20.x | Runtime del backend |
+| Node.js | 20.x o superior | Runtime del backend |
 | Express | 4.x | Framework de la API REST |
 | Prisma | 5.x | ORM para PostgreSQL |
 | PostgreSQL (NeonDB) | 15 | Base de datos relacional serverless |
 | JWT (jsonwebtoken) | 9.x | Autenticación basada en tokens |
 | bcrypt | 5.x | Hash de contraseñas |
-| HTML5 / CSS / JavaScript vainilla | — | Frontend (consumo de la API vía fetch) |
-| Bootstrap | 5.3.x | Estilos y componentes UI |
-| Claude API (@anthropic-ai/sdk) | — | Análisis de texto, Coach IA y explicabilidad |
-| Brevo | — | Envío de notificaciones por correo al orientador |
-| DiceBear (o SVG propio) | — | Estados visuales del avatar del Gemelo Digital Comunitario |
+| zod | 3.x | Validación de payloads en cada endpoint |
+| Claude API (@anthropic-ai/sdk) | 0.27.x | Conducción del check-in, Coach IA y explicabilidad |
+| Brevo | — | Envío de notificaciones por correo al orientador/a |
+
+**Frontend** (`client/`)
+
+| Tecnología | Versión | Uso |
+|---|---|---|
+| React | 19.x | Interfaz completa, una sola aplicación |
+| TypeScript | 7.x | Tipos del dominio compartidos entre vistas |
+| Vite | 8.x | Servidor de desarrollo y empaquetado |
+| react-router-dom | 7.x | Enrutado con rutas de diseño por rol |
+| Tailwind CSS | **3.4.x** | Sistema visual de las pantallas portadas |
+| Bootstrap | 5.3.x | Estilos heredados de las vistas aún sin portar |
+
+> **Tailwind v3, no v4.** Los diseños de origen se hicieron con el Play CDN, que
+> es v3. En v4 cambian la escala de sombras, el grosor de `ring`, el color de
+> borde por defecto y los nombres de degradado: migrar reinterpretaría más de
+> mil clases y perdería la fidelidad. Ver `client/tailwind.config.js`.
+
+El avatar del gemelo y la mascota **no** usan DiceBear ni ningún servicio
+externo: son SVG propios, con un rig de 33 estados en `client/src/lumy/`.
 
 ---
 
@@ -69,6 +89,8 @@ git clone https://github.com/IsraDev29/lumys.git
 cd lumys
 
 # 2. Instala las dependencias
+#    El `postinstall` instala también las de client/, así que no hace falta
+#    entrar a esa carpeta a mano.
 npm install
 
 # 3. Configura las variables de entorno
@@ -82,14 +104,33 @@ npx prisma migrate dev
 ## Ejecución
 
 ```bash
-# Modo desarrollo
+# Desarrollo: levanta la API y el cliente a la vez
 npm run dev
 
-# Modo producción
+# Solo uno de los dos
+npm run dev:api        # Express con nodemon, puerto 5000
+npm run dev:client     # Vite, puerto 5173
+
+# Producción: compila el cliente y sirve la API
+npm run build
 npm start
 ```
 
-La aplicación estará disponible en: `http://localhost:3000`
+En desarrollo se abren dos puertos: **Vite en 5173**, que es donde se navega, y
+**Express en 5000**. El proxy de Vite manda `/api/v1/...` al segundo, así que la
+ruta de las peticiones es la misma en desarrollo y en producción y no existe una
+rama "si estamos en dev, la URL es otra".
+
+Los dos puertos se pueden mover con `PORT` (Vite) y `PUERTO_API` (Express).
+
+**Pruebas:**
+
+```bash
+npm test                 # toda la suite
+npm run test:privacidad   # alcance por rol y cabeceras de seguridad
+npm run test:lumy         # fidelidad del rig de la mascota
+npm run tipos             # comprobación de tipos del cliente
+```
 
 ---
 
@@ -98,27 +139,55 @@ La aplicación estará disponible en: `http://localhost:3000`
 Lumys usa un **monolito modular** (no microservicios desplegados por separado), una decisión deliberada para mantener velocidad de desarrollo y un único punto de despliegue, mientras conserva separación de responsabilidades por dominio dentro del propio backend. Cada módulo ya está desacoplado internamente, por lo que el sistema podría escalar a microservicios reales en el futuro sin reescribir lógica de negocio.
 
 ```
-Frontend: HTML + JS vainilla + Bootstrap (fetch)
+Cliente: React 19 + TypeScript + Vite  (client/)
+         vistas → lib/api.ts → lib/metricas.ts
                 |
+                |  fetch /api/v1/…  (proxy de Vite en desarrollo)
                 v
           API REST (Express)
                 |
-   _____________|_______________________________________________
-   |         |          |            |            |             |
-[Auth]  [Emocional] [IA/NLP]   [Alertas]   [Notificaciones] [Comunitario]
-   |         |     (texto+voz)     |             |          (Gemelo Digital
-   |         |          |          |             |           + Radar + Avatar
-   |         |          |          |             |            + Federado)
-   |_________|__________|__________|_____________|_______________|
-                          |                              |
-                          v                              v
-                    Prisma ORM                     API de Brevo
-                          |                    (correo al orientador)
+   _____________|_____________________________________
+   |         |          |            |                |
+[Auth]  [Emocional] [IA/NLP]   [Alertas]      [Comunitario]
+   |         |     (texto+voz)     |         (Gemelo + Radar
+   |         |          |          |          + Avatar + Federado)
+   |_________|__________|__________|________________|
+                          |                    |
+                          v                    v
+                    Prisma ORM           API de Brevo
+                          |         (correo al orientador/a)
                           v
                 PostgreSQL (NeonDB)
 ```
 
-**Patrón:** arquitectura en capas (routes → controller → service → Prisma) dentro de cada módulo, organizada por dominio.
+**Patrón:** arquitectura en capas (router → controller → service → Prisma)
+dentro de cada módulo, organizada por dominio.
+
+### La capa de métricas del cliente
+
+`client/src/lib/metricas.ts` traduce lo que devuelve la API a lo que dibuja cada
+gráfico, y deriva las métricas que ningún endpoint calcula todavía.
+
+Existe porque el cliente y el servidor **no comparten la forma de las
+respuestas**, y eso pasaba inadvertido: los perfiles de demostración entran sin
+autenticar, el servidor respondía 401, el respaldo de `lib/demo.ts` se activaba
+y la pantalla se veía perfecta con los datos de otro. Con una sesión real el
+gemelo manda `serie` donde el gráfico lee `lineaBase`, `clima` llega como objeto
+donde se espera una cadena, y el radar del centro manda promedios en escala 1-5
+que el SVG dibuja como porcentaje del radio.
+
+Sus funciones son puras y están cubiertas por `test/metricas.test.js`.
+
+**Regla que gobierna medio archivo:** el ICVE va de 0 a 100 y **más alto es más
+vulnerabilidad**; en los componentes sueltos es al revés, 5 es la mejor
+situación. Confundir los dos signos le diría a un estudiante que mejoró justo el
+día que empeoró.
+
+**Qué no se dibuja.** Varias pantallas mostraban cifras escritas a mano con la
+misma tipografía que las reales — porcentajes de confianza, de derivaciones
+confirmadas, horas protegidas. Ninguna estaba instrumentada. Se retiraron y en
+su lugar hay una nota que dice qué falta medir: un número inventado en un panel
+que se usa para decidir es peor que un hueco.
 
 ### Módulo IA/NLP
 
@@ -160,7 +229,7 @@ preguntas por componente, elegidas al azar, y lo dice en pantalla.
 El módulo `comunitario` agrupa tres piezas conceptualmente ligadas:
 - **`gemelo.service.js`**: calcula el ICVE agregado y anonimizado por aula, centro o comunidad — el Gemelo Digital Emocional Comunitario. Nunca expone datos de una persona individual; aplica un umbral mínimo de registros por grupo antes de mostrar resultados.
 - **`federado.service.js`**: en vez de centralizar los registros emocionales crudos de cada centro educativo, cada institución agrega localmente sus propios parámetros (ej. ICVE promedio, total de registros) y solo esos parámetros agregados se sincronizan — una aproximación práctica al aprendizaje federado para el alcance de un hackathon.
-- **`avatar.service.js`**: traduce el ICVE agregado de un grupo a un estado visual (ej. bajo / medio / alto / crítico) que se muestra como un avatar único representando al grupo completo, nunca a una persona — construido con SVG propio o DiceBear, sin depender de APIs de terceros con licencia (como Bitmoji o Duolingo, que no están disponibles para integraciones externas).
+- **`avatar.service.js`**: traduce el ICVE a un clima —`despejado`, `parcial`, `nublado`, `tormenta`— que el cliente dibuja con la mascota. Es la única capa donde un número se convierte en algo que un adolescente lee sobre sí mismo, y por eso tiene reglas propias: el titular es el clima y nunca el número (un "78" invita a compararse con el "60" de un compañero), el lenguaje describe el día y no a la persona, y ningún estado es un fracaso. Un quinto valor, `sin_datos`, no es un clima sino su ausencia: decirlo así evita que alguien recién llegado vea "despejado" y crea que el sistema ya sabe algo de él. El dibujo es SVG propio, sin DiceBear ni APIs de terceros con licencia.
 
 ---
 
@@ -197,7 +266,8 @@ Copia `.env.example` como `.env` y completa los valores reales. Nunca subas tu `
 
 | Variable | Requerida | Descripción | Ejemplo |
 |---|---|---|---|
-| PORT | Sí | Puerto del servidor | 3000 |
+| PORT | No | Puerto de Vite en desarrollo. Por defecto 5173. | 5173 |
+| PUERTO_API | No | Puerto de Express. Por defecto 5000. | 5000 |
 | DATABASE_URL | Sí | URL de conexión a NeonDB (PostgreSQL) | postgresql://user:pass@host/lumys |
 | JWT_SECRET | Sí | Clave secreta para firmar tokens JWT | (cadena larga y aleatoria) |
 | JWT_EXPIRES_IN | No | Tiempo de expiración del token | 7d |
@@ -213,89 +283,103 @@ Copia `.env.example` como `.env` y completa los valores reales. Nunca subas tu `
 
 ```
 lumys/
-├── src/
-│   ├── auth/
-│   │   ├── auth.routes.js
-│   │   ├── auth.controller.js
-│   │   └── auth.service.js
-│   │
-│   ├── emocional/
-│   │   ├── emocional.routes.js
-│   │   ├── emocional.controller.js
-│   │   └── icve.service.js
-│   │
-│   ├── ia/
-│   │   ├── ia.routes.js
-│   │   ├── ia.controller.js
-│   │   ├── ia.service.js          # análisis de texto (Claude API) + coach_ia
-│   │   ├── ia.voz.service.js       # análisis de voz (pausas, tono, velocidad)
-│   │   └── ia.prompts.js
-│   │
-│   ├── alertas/
-│   │   ├── alertas.routes.js
-│   │   └── alertas.controller.js
-│   │
-│   ├── notificaciones/
-│   │   ├── notificaciones.routes.js
-│   │   ├── notificaciones.controller.js
-│   │   └── brevo.service.js
-│   │
-│   ├── comunitario/
-│   │   ├── comunitario.routes.js
-│   │   ├── comunitario.controller.js
-│   │   ├── gemelo.service.js        # Gemelo Digital Emocional Comunitario
-│   │   ├── federado.service.js      # agregación tipo aprendizaje federado
-│   │   └── avatar.service.js        # estado visual del avatar según ICVE agregado
-│   │
-│   ├── middlewares/
-│   │   ├── auth.middleware.js
-│   │   ├── error.middleware.js
-│   │   └── validate.middleware.js
-│   │
+├── src/                              # backend (CommonJS)
+│   ├── auth/          auth.routes.js · auth.controller.js · auth.service.js · auth.schema.js
+│   ├── usuarios/      usuarios.routes.js · usuarios.controller.js   # alcance por rol
+│   ├── Emocional/     emocional.routers.js · emocional.controlers.js
+│   │                  icve.service.js          # motor del ICVE, aritmética pura
+│   ├── IA/            ia.routers.js · ia.controller.js · ia.schema.js
+│   │                  ia.service.js            # conduce el check-in con Claude
+│   │                  ia.voz.service.js        # prosodia, nunca audio
+│   │                  ia.seguridad.js          # léxico determinista de riesgo
+│   │                  ia.prompt.js
+│   ├── alertas/       alerta.router.js · alerta.controller.js · alerta.service.js
+│   ├── comunitario/   comunitario.routers.js · comunitario.controller.js
+│   │                  gemelo.service.js        # gemelo del propio estudiante
+│   │                  federado.service.js      # agregados con umbral mínimo
+│   │                  avatar.service.js        # ICVE → clima
+│   ├── middlewares/   auth · error · permisos · seguridad · validate
+│   ├── db.js
 │   └── server.js
 │
-├── prisma/
-│   └── schema.prisma
+├── client/                           # frontend (React 19 + TS, ESM)
+│   ├── src/
+│   │   ├── vistas/       una por pantalla: Bienvenida, Acceso, Inicio, Checkin,
+│   │   │                 Historial, Red, Capsulas, Respirar, Logros, Perfil,
+│   │   │                 Orientador, Psicologo, Institucional, Comunitario, …
+│   │   ├── componentes/  Cascaron, BarraInferior, Identidad, graficos, comunes…
+│   │   ├── lumy/         rig de la mascota: 33 estados sobre una sola geometría
+│   │   ├── lib/          api.ts · metricas.ts · tipos.ts · demo.ts · voz.ts
+│   │   │                 progreso.ts · ambiente.ts · almacen.ts · movimiento.ts
+│   │   └── estilos/      CSS propio heredado + stitch.css (capa de Tailwind)
+│   ├── public/img/       isotipo y mascota
+│   ├── tailwind.config.js
+│   └── vite.config.ts
 │
-├── public/
-│   ├── index.html                  # check-in diario
-│   ├── dashboard.html               # panel del orientador
-│   ├── historial.html               # Huella Emocional del estudiante
-│   ├── comunitario.html              # vista del Gemelo Digital / Radar
-│   │
-│   ├── css/
-│   │   ├── variables.css
-│   │   ├── base.css
-│   │   ├── components.css
-│   │   ├── checkin.css
-│   │   ├── dashboard.css
-│   │   ├── historial.css
-│   │   └── comunitario.css
-│   │
-│   └── js/
-│       ├── api.js
-│       ├── checkin.js
-│       ├── dashboard.js
-│       ├── historial.js
-│       ├── comunitario.js
-│       └── utils.js
-│
-├── test/
+├── prisma/schema.prisma
+├── test/                             # node --test, sin framework externo
+├── tools/                            # exportador de SVG del rig
 ├── docs/
-├── .env
-├── .env.example
-├── .gitignore
-├── package.json
-├── package-lock.json
-└── README.md
+└── package.json
 ```
 
-- **auth/**: maneja el ciclo de vida del usuario (registro, login, emisión y verificación de JWT).
-- **emocional/**: contiene la lógica central del producto — registro diario y el motor de cálculo del ICVE.
-- **ia/**: encapsula la llamada a la API de Claude (texto y voz); recibe `texto_usuario`/audio, devuelve sentimiento, factores explicativos y `coach_ia`; nunca expone la clave de API al frontend.
-- **alertas/**: convierte un ICVE alto en una alerta accionable para un responsable humano.
-- **notificaciones/**: envía el correo automático al orientador vía Brevo cuando se genera una alerta.
-- **comunitario/**: expone el Gemelo Digital Emocional Comunitario, la agregación federada por centro, y el estado visual del avatar comunitario.
+**Backend**
+
+- **auth/** — ciclo de vida del usuario: registro, login, emisión y verificación de JWT.
+- **usuarios/** — administración y, sobre todo, `alcanceDeEstudiantes()`: quién puede ver a quién.
+- **Emocional/** — el registro diario y el motor del ICVE. Toda la aritmética que dispara alertas vive acá, no en el modelo.
+- **IA/** — conduce el check-in y explica el resultado; nunca expone la clave al cliente.
+- **alertas/** — convierte una señal sostenida en algo accionable para una persona.
+- **comunitario/** — el gemelo del estudiante, los agregados del centro y la traducción de ICVE a clima.
+
+No hay módulo `notificaciones/`: el envío por Brevo se dispara desde el flujo de
+alertas.
+
+**Frontend**
+
+- **vistas/** — una por pantalla. No comparten estado entre sí: cada una pide lo suyo con `useDatos`.
+- **lib/api.ts** — único punto de contacto con la API. Si el servidor no responde, cae al respaldo de `demo.ts` para que el recorrido completo siga siendo navegable.
+- **lib/metricas.ts** — traduce las respuestas del servidor y deriva las métricas sin endpoint.
+- **lumy/** — el rig de la mascota. Las poses **deforman** la geometría original, nunca la redibujan; `test/lumy.test.js` lo comprueba.
+
+---
+
+## Identidad de marca
+
+**Paleta 2026:** lavanda, celeste, sol y navy. Las variables `--lm-emerald` y
+`--lm-teal` que aparecen en el CSS son alias heredados de la paleta anterior y
+**no son verdes**: apuntan a los tonos actuales. No conviene fiarse del nombre.
+
+**Isotipo** — `client/src/componentes/Identidad.tsx` (componente) y
+`client/public/img/lumys-isotipo.svg` (copia estática para el favicon y los
+iconos del PWA, que no pueden ser React). Son el mismo dibujo en dos formatos:
+si el `d` de la silueta cambia en uno, tiene que cambiar en el otro.
+
+La silueta es una blob armónica, `r(θ) = 296·(1 + 0.055·cos(5θ − 0.55) +
+0.022·cos(2θ + 1.10))`, muestreada en 64 puntos y cerrada con Catmull-Rom. Se
+llegó ahí después de descartar dos caminos: una curva de ocho nodos con valles
+profundos daba un diamante con puntas en las diagonales, y construirla como
+unión de círculos dejaba muescas en punta allí donde dos círculos se cortan. Una
+suma de cosenos no tiene esquinas por construcción.
+
+**Logotipo** — se renderiza en línea y no como `<img>`: un SVG cargado como
+imagen no carga fuentes web, así que "Lumys" saldría con la tipografía por
+defecto del navegador en vez de con Fredoka.
+
+**Mascota (Lumy)** — `client/src/lumy/`. Un rig de 33 estados sobre una sola
+geometría, repartidos en dos bandas:
+
+- **apoyo** — las que Lumy adopta por su cuenta.
+- **espejo** — solo cuando el estudiante nombra lo suyo primero.
+
+La distinción está en los tipos, no en una convención: `<Lumy emocion="tristeza" />`
+no compila sin `espejo`. Si alguien reporta que durmió mal y la mascota se pone
+triste, se valida el afecto pero se amplifica.
+
+> **Estado actual.** El SVG de referencia (`lumys-mascota.svg`) se reemplazó por
+> un PNG, y con él dejó de funcionar la comparación automática de
+> `test/lumy.test.js`: contra un mapa de bits no se puede verificar que ningún
+> trazo se haya movido. Faltan emociones por reponer en el rig.
 
 ---
 
@@ -492,11 +576,44 @@ Disparadas automáticamente al crearse una alerta; no requieren llamada manual d
 
 ### Comunitario
 
-**GET /comunitario/gemelo** — Estado agregado y anonimizado del Gemelo Digital Emocional por centro/comunidad.
+Son dos vistas con audiencias distintas, y por eso viven en rutas distintas con
+permisos distintos. La segunda no es "la primera pero de todos": es una
+agregación con umbral mínimo, porque el promedio de un grupo chico identifica a
+sus miembros.
 
-**GET /comunitario/radar** — Tendencias agregadas por aula o centro.
+**GET /comunitario/gemelo** — El gemelo del **propio estudiante**: su clima de
+hoy, su serie de los últimos catorce días y qué se movió respecto de su patrón.
+Siempre sobre `req.usuario.id`, nunca sobre un id de la URL.
 
-**GET /comunitario/avatar** — Estado visual actual del avatar comunitario, derivado del ICVE agregado.
+```json
+// Respuesta 200 OK
+{
+  "nombre": "Kevin",
+  "clima": { "id": "nublado", "titulo": "Día nublado", "mensaje": "…", "mascota": "atenta" },
+  "titular": "Hoy venís parecido a tu propio promedio.",
+  "racha": 12, "totalRegistros": 27, "checkinHoy": true,
+  "serie": [ { "fecha": "2026-09-01T…", "valor": 64 } ],
+  "promedioPropio": 72,
+  "ipsativa": [
+    { "componente": "sueno", "etiqueta": "Sueño", "hoy": 2,
+      "habitual": 3.4, "delta": -1.4, "tendencia": "baja",
+      "nota": "Por debajo de tu promedio" }
+  ],
+  "mensaje": "Gracias por aparecer hoy."
+}
+```
+
+**GET /comunitario/radar** — El gemelo **del centro**, para orientador/a,
+psicólogo o docente. Devuelve `suficiente: false` cuando el mes no llega al
+mínimo de registros: por debajo de ese umbral no se promedia nada. Los valores
+de `actual` y `promedio` vienen en la escala 1-5 de los componentes, no en
+porcentaje.
+
+Un usuario sin institución recibe **409**, no un 200 con todo en null: responder
+que sí y devolver vacío mentiría sobre por qué la pantalla está en blanco.
+
+No existe `GET /comunitario/avatar`. El clima viaja dentro de las dos respuestas
+anteriores y la traducción a estado visual la hace el cliente.
 
 Para documentación completa de la API, consulta la referencia en Postman / Swagger.
 
